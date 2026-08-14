@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="生活探索抽签机">
+  <rect width="512" height="512" rx="112" fill="#8e2b21"/>
+  <circle cx="256" cy="256" r="172" fill="#fdf8f0"/>
+  <g fill="none" stroke="#8e2b21" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M184 188h144l-18 180H202z" fill="#c9a227" stroke-width="18"/>
+    <path d="M174 188h164" stroke-width="22"/>
+    <path d="M222 188l-18-76M258 188V96M294 188l20-70" stroke-width="18"/>
+  </g>
+  <circle cx="256" cy="278" r="46" fill="#8e2b21"/>
+  <path d="M236 279l14 14 29-34" fill="none" stroke="#fdf8f0" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#8e2b21">
+<meta name="description" content="把今天的状态交给签筒，换一个马上能做的小冒险。记录只保存在当前设备。">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="探索抽签机">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<title>生活探索抽签机</title>
+<style>
+  :root {
+    --paper: #fdf8f0;
+    --ink: #2b2b2b;
+    --ink-light: #6b6255;
+    --red: #b03a2e;
+    --red-deep: #8e2b21;
+    --gold: #c9a227;
+    --border: #e0d5c0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    background-image: radial-gradient(circle at 20% 10%, #fff8 0, transparent 40%),
+                      radial-gradient(circle at 80% 90%, #c9a22710 0, transparent 40%);
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 32px 20px 80px; }
+
+  header { text-align: center; margin-bottom: 28px; position: relative; }
+  .audio-bar {
+    position: absolute; right: 0; top: 0;
+    display: flex; gap: 6px;
+  }
+  .audio-btn {
+    background: #fff; border: 1px solid var(--border); border-radius: 999px;
+    padding: 5px 12px; font-size: 12px; color: var(--ink-light); cursor: pointer;
+    transition: all .2s; display: inline-flex; align-items: center; gap: 4px;
+    user-select: none; box-shadow: 0 2px 6px #00000008; font-family: inherit;
+  }
+  .audio-btn:hover { border-color: var(--red); color: var(--red); }
+  .audio-btn.on { border-color: var(--gold); color: #8a6d1a; background: #fffdf2; font-weight: 600; }
+  .audio-btn.muted { opacity: 0.6; color: var(--ink-light); }
+  @media (max-width: 540px) {
+    .audio-bar { position: static; justify-content: center; margin: 0 auto 12px; display: flex; }
+  }
+  header h1 { font-size: 34px; letter-spacing: 6px; color: var(--red-deep); font-weight: 700; }
+  header p { color: var(--ink-light); margin-top: 8px; font-size: 14px; letter-spacing: 2px; }
+  .seal {
+    display: inline-block; margin-top: 10px; padding: 2px 10px;
+    border: 2px solid var(--red); color: var(--red); border-radius: 4px;
+    font-size: 12px; letter-spacing: 3px; transform: rotate(-3deg);
+  }
+  #netBadge {
+    display: none; margin: 0 auto 14px; padding: 6px 14px; width: fit-content;
+    border-radius: 999px; font-size: 12px; letter-spacing: 1px;
+    background: #fdf0d5; color: #8a6d1a; border: 1px solid #ecd9a0;
+  }
+  #netBadge.off { display: block; }
+  #netBadge.local { display: block; }
+
+  .panel {
+    background: #fff; border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px 22px; margin-bottom: 18px;
+    box-shadow: 0 2px 10px #00000008;
+  }
+  .panel h2 {
+    font-size: 14px; color: var(--ink-light); letter-spacing: 3px;
+    margin-bottom: 12px; font-weight: 600;
+  }
+  .row { margin-bottom: 14px; }
+  .row:last-child { margin-bottom: 0; }
+  .row label { display: block; font-size: 13px; color: var(--ink-light); margin-bottom: 7px; }
+  .row label b { color: var(--red); font-weight: 600; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    padding: 7px 15px; border: 1px solid var(--border); border-radius: 999px;
+    background: var(--paper); cursor: pointer; font-size: 14px; color: var(--ink);
+    transition: all .15s; user-select: none;
+  }
+  .chip:hover { border-color: var(--red); color: var(--red); }
+  .chip.on { background: var(--red); color: #fff; border-color: var(--red); box-shadow: 0 2px 6px #b03a2e44; }
+
+  input[type=range] { width: 100%; accent-color: var(--red); cursor: pointer; }
+  .range-val { font-size: 13px; color: var(--red); font-weight: 600; }
+
+  #drawBtn {
+    display: block; width: 100%; padding: 16px; font-size: 20px; letter-spacing: 8px;
+    background: linear-gradient(135deg, var(--red), var(--red-deep));
+    color: #fff; border: none; border-radius: 14px; cursor: pointer;
+    font-family: inherit; font-weight: 700;
+    box-shadow: 0 4px 16px #b03a2e55;
+    transition: transform .1s, box-shadow .2s;
+    margin: 22px 0;
+  }
+  #drawBtn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px #b03a2e66; }
+  #drawBtn:active { transform: scale(.98); }
+  #drawBtn:disabled { opacity: .6; cursor: wait; }
+
+  #tube { text-align: center; font-size: 64px; height: 90px; line-height: 90px; display: none; margin-bottom: 4px; }
+  #tube.shaking { display: block; animation: shake .12s infinite; }
+  @keyframes shake {
+    0% { transform: rotate(-10deg) translateX(-3px); }
+    50% { transform: rotate(10deg) translateX(3px); }
+    100% { transform: rotate(-10deg) translateX(-3px); }
+  }
+
+  #result { display: none; }
+  .fortune-card {
+    background: linear-gradient(180deg, #fffdf8, #fdf5e6);
+    border: 2px solid var(--gold); border-radius: 16px;
+    padding: 26px 26px 22px; position: relative;
+    box-shadow: 0 6px 24px #c9a22722;
+    animation: pop .5s cubic-bezier(.2, 1.4, .4, 1);
+  }
+  @keyframes pop { from { transform: scale(.85) rotate(-2deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
+  .fortune-level {
+    position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+    background: var(--red); color: #fff; padding: 4px 18px; border-radius: 999px;
+    font-size: 14px; letter-spacing: 4px; font-weight: 700;
+    box-shadow: 0 2px 8px #b03a2e44;
+  }
+  .fortune-title { font-size: 22px; font-weight: 700; color: var(--red-deep); margin: 8px 0 12px; letter-spacing: 1px; }
+  .fortune-desc { font-size: 15px; line-height: 1.9; color: var(--ink); }
+  .steps { margin-top: 14px; padding: 14px 16px; background: #fff; border-radius: 10px; border: 1px dashed var(--border); }
+  .steps li { font-size: 14px; line-height: 2; color: var(--ink-light); list-style: none; padding-left: 22px; position: relative; }
+  .steps li::before { content: "◆"; position: absolute; left: 0; color: var(--gold); font-size: 10px; top: 7px; }
+  .fortune-meta { margin-top: 12px; font-size: 12px; color: var(--ink-light); letter-spacing: 1px; }
+
+  .result-actions { display: flex; gap: 10px; margin-top: 16px; }
+  .btn {
+    flex: 1; padding: 12px; border-radius: 10px; border: 1px solid var(--border);
+    background: #fff; cursor: pointer; font-size: 14px; font-family: inherit; transition: all .15s;
+  }
+  .btn:hover { border-color: var(--red); color: var(--red); }
+  .btn.primary { background: var(--red); color: #fff; border-color: var(--red); }
+  .btn.primary:hover { background: var(--red-deep); }
+  .btn:disabled { opacity: .5; cursor: wait; }
+
+  #emptyHint { display: none; text-align: center; color: var(--ink-light); padding: 20px; font-size: 14px; }
+
+  /* 完成弹窗 */
+  #modalMask {
+    display: none; position: fixed; inset: 0; background: #00000070;
+    z-index: 50; align-items: center; justify-content: center; padding: 20px;
+  }
+  #modalMask.open { display: flex; }
+  #modal {
+    background: var(--paper); border-radius: 16px; width: 100%; max-width: 460px;
+    max-height: 88vh; overflow-y: auto; padding: 22px;
+    animation: pop .35s cubic-bezier(.2, 1.4, .4, 1);
+  }
+  #modal h3 { font-size: 17px; color: var(--red-deep); margin-bottom: 4px; }
+  #modal .sub { font-size: 12px; color: var(--ink-light); margin-bottom: 14px; }
+  #modal label { display: block; font-size: 13px; color: var(--ink-light); margin: 12px 0 6px; }
+  #modal textarea, #modal input[type=text] {
+    width: 100%; border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; font-size: 14px; font-family: inherit; background: #fff; resize: vertical;
+  }
+  #modal textarea { min-height: 90px; }
+  #photoInput { display: none; }
+  #photoPickBtn {
+    display: inline-block; padding: 10px 18px; border: 1px dashed var(--red);
+    color: var(--red); border-radius: 10px; cursor: pointer; font-size: 13px; background: #fff;
+  }
+  #photoPreview { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  #photoPreview .ph { position: relative; width: 72px; height: 72px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+  #photoPreview .ph img { width: 100%; height: 100%; object-fit: cover; }
+  #photoPreview .ph .del {
+    position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; border-radius: 50%;
+    background: #000000aa; color: #fff; font-size: 12px; line-height: 18px; text-align: center; cursor: pointer;
+  }
+  .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+
+  /* 探险回忆 */
+  #memoryCard { display: none; }
+  .mem-inner {
+    background: linear-gradient(135deg, #fffdf6, #fdf3e0);
+    border: 1px solid var(--gold); border-radius: 12px; padding: 14px 16px;
+    display: flex; gap: 12px; align-items: center;
+  }
+  .mem-inner img { width: 64px; height: 64px; border-radius: 8px; object-fit: cover; flex-shrink: 0; cursor: pointer; }
+  .mem-text { flex: 1; min-width: 0; }
+  .mem-date { font-size: 11px; color: var(--gold); font-weight: 600; letter-spacing: 1px; }
+  .mem-note { font-size: 14px; line-height: 1.7; margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .mem-title { font-size: 12px; color: var(--ink-light); margin-top: 3px; }
+  #memRefresh { background: none; border: none; color: var(--red); cursor: pointer; font-size: 12px; float: right; }
+
+  /* 时间轴手账 */
+  .timeline { position: relative; padding-left: 18px; }
+  .timeline::before { content: ""; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 2px; background: var(--border); }
+  .tl-item { position: relative; padding: 0 0 22px 14px; }
+  .tl-item::before {
+    content: ""; position: absolute; left: -18px; top: 5px; width: 9px; height: 9px;
+    border-radius: 50%; background: var(--red); border: 2px solid var(--paper);
+  }
+  .tl-time { font-size: 12px; color: var(--gold); font-weight: 700; letter-spacing: 1px; }
+  .tl-title { font-size: 15px; font-weight: 700; margin: 3px 0; }
+  .tl-loc { font-size: 12px; color: var(--ink-light); }
+  .tl-note { font-size: 14px; line-height: 1.8; margin-top: 6px; background: #fff; border: 1px dashed var(--border); border-radius: 10px; padding: 10px 12px; }
+  .tl-photos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .tl-photos img { width: 84px; height: 84px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); cursor: zoom-in; }
+  .hist-empty { text-align: center; color: var(--ink-light); font-size: 13px; padding: 16px 0; }
+  #clearHist { font-size: 12px; float: right; background: none; border: none; color: var(--ink-light); cursor: pointer; }
+  #clearHist:hover { color: var(--red); }
+
+  /* 灯箱 */
+  #lightbox {
+    display: none; position: fixed; inset: 0; background: #000000d0; z-index: 99;
+    align-items: center; justify-content: center; cursor: zoom-out; padding: 20px;
+  }
+  #lightbox.open { display: flex; }
+  #lightbox img { max-width: 100%; max-height: 100%; border-radius: 8px; }
+
+  footer { text-align: center; margin-top: 30px; font-size: 12px; color: var(--ink-light); letter-spacing: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="audio-bar">
+      <button id="installBtn" class="audio-btn" title="安装到主屏幕" hidden>📲 安装</button>
+      <button id="soundToggle" class="audio-btn" title="开关动作音效">🔊 音效开</button>
+      <button id="bgmToggle" class="audio-btn" title="开关背景音乐">🎵 音乐关</button>
+    </div>
+    <h1>生活探索抽签机</h1>
+    <p>把今天的状态交给签筒，换一个具体的、马上能做的小冒险</p>
+    <span class="seal">城市观察局</span>
+  </header>
+
+  <div id="netBadge" class="local">📱 本地版：手账与照片只保存在这台设备上</div>
+
+  <div class="panel">
+    <h2>今日状态</h2>
+
+    <div class="row">
+      <label>现在是什么时候</label>
+      <div class="chips" id="timeChips">
+        <span class="chip on" data-v="morning">早晨</span>
+        <span class="chip" data-v="afternoon">下午</span>
+        <span class="chip" data-v="evening">傍晚</span>
+        <span class="chip" data-v="night">夜晚</span>
+      </div>
+    </div>
+
+    <div class="row">
+      <label>天气</label>
+      <div class="chips" id="weatherChips">
+        <span class="chip on" data-v="sunny">晴</span>
+        <span class="chip" data-v="cloudy">阴</span>
+        <span class="chip" data-v="rain">雨</span>
+        <span class="chip" data-v="snow">雪 / 严寒</span>
+      </div>
+    </div>
+
+    <div class="row">
+      <label>预算 <b class="range-val" id="budgetVal">30 元</b></label>
+      <input type="range" id="budget" min="0" max="200" step="10" value="30">
+    </div>
+
+    <div class="row">
+      <label>可出门时长 <b class="range-val" id="durVal">90 分钟</b></label>
+      <input type="range" id="duration" min="30" max="180" step="30" value="90">
+    </div>
+
+    <div class="row">
+      <label>体力</label>
+      <div class="chips" id="energyChips">
+        <span class="chip" data-v="1">只想瘫着</span>
+        <span class="chip on" data-v="2">一般般</span>
+        <span class="chip" data-v="3">精力旺盛</span>
+      </div>
+    </div>
+
+    <div class="row">
+      <label>此刻心情</label>
+      <div class="chips" id="moodChips">
+        <span class="chip on" data-v="quiet">想安静独处</span>
+        <span class="chip" data-v="lively">想感受人气</span>
+        <span class="chip" data-v="heal">想被治愈</span>
+        <span class="chip" data-v="fresh">想要新鲜感</span>
+      </div>
+    </div>
+  </div>
+
+  <button id="drawBtn">摇 签</button>
+  <div id="tube">🏺</div>
+
+  <div id="result">
+    <div class="fortune-card">
+      <div class="fortune-level" id="fLevel">上上签</div>
+      <div class="fortune-title" id="fTitle"></div>
+      <div class="fortune-desc" id="fDesc"></div>
+      <ul class="steps" id="fSteps"></ul>
+      <div class="fortune-meta" id="fMeta"></div>
+    </div>
+    <div class="result-actions">
+      <button class="btn" id="redrawBtn">不合心意，换一签</button>
+      <button class="btn primary" id="doneBtn">我完成了 ✓</button>
+    </div>
+  </div>
+
+  <div id="emptyHint">😮 这个条件下签筒空了——试试放宽预算、时间或换个心情？</div>
+
+  <div class="panel" id="memoryCard" style="margin-top:26px;">
+    <h2>探险回忆 <button id="memRefresh">换一段</button></h2>
+    <div class="mem-inner" id="memInner"></div>
+  </div>
+
+  <div class="panel" style="margin-top:18px;">
+    <h2>探索手账 <button id="clearHist">清空</button></h2>
+    <div id="historyList"><div class="hist-empty">加载中……</div></div>
+  </div>
+
+  <footer>已完成的签不会再出现 · 签库见底时自动重新洗牌</footer>
+</div>
+
+<!-- 完成弹窗 -->
+<div id="modalMask">
+  <div id="modal">
+    <h3>记录这次探索</h3>
+    <div class="sub" id="modalTaskName"></div>
+    <label>探险感言</label>
+    <textarea id="noteInput" placeholder="今天看到了什么？100 字也好，一句话也行"></textarea>
+    <label>照片（可多张，自动压缩）</label>
+    <span id="photoPickBtn">📷 选择照片</span>
+    <input type="file" id="photoInput" accept="image/*" multiple>
+    <div id="photoPreview"></div>
+    <label>地点</label>
+    <input type="text" id="locInput" placeholder="例如：城南老街 / 人民公园北门">
+    <div class="modal-actions">
+      <button class="btn" id="modalCancel">取消</button>
+      <button class="btn primary" id="modalSave">存入手账 ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- 灯箱 -->
+<div id="lightbox"><img id="lbImg" src=""></div>
+
+<script>
+/* ============ 任务签库（60 签） ============
+ * budget: 最低预算  energy: 最低体力(1-3)  min: 最少分钟数
+ * times: 适用时段(空=均可)  outdoor: 是否户外  rainOk: 雨雪天是否可行
+ * mood: 契合心情 quiet/lively/heal/fresh   weatherNeed: 限定天气
+ */
+const POOL = [
+  {id:"road_change", t:"未知道路摄影签", d:"去附近一条你从未走过的路，用镜头记录这座城市正在变化的证据。", steps:["选一条从没走过的方向出发","拍 {n} 张「城市正在变化」的照片：工地、新招牌、拆迁墙、新栽的树","挑一种预算内没吃过的小吃尝尝","回家后写 100 字：这条路和你想象的有什么不同"], budget:15, energy:2, min:60, outdoor:true, rainOk:false, mood:["fresh","quiet"]},
+  {id:"old_shop", t:"老字号寻访签", d:"找到附近一家开了十年以上的小店，和店主聊一句天。", steps:["地图搜「附近」+ 老店 / 或直接问楼下保安","点一样最便宜的东西（预算 {budget} 元内）","问店主：「这条街这些年变了吗？」","记下他说的一个细节"], budget:20, energy:2, min:60, outdoor:true, rainOk:true, mood:["quiet","heal"]},
+  {id:"bus_end", t:"公交终点签", d:"随便上一辆公交，坐几站就下车，探索一会儿再回来。", steps:["选一个从没坐过的线路，坐 3-5 站","在一个陌生站下车","沿主街走 15 分钟","拍 1 张「这里和我住的街区最大的不同」"], budget:8, energy:2, min:60, outdoor:true, rainOk:false, mood:["fresh","lively"]},
+  {id:"market", t:"菜市场人间签", d:"去最近的菜市场，不买菜也行，去感受一座城市最真实的烟火气。", steps:["找一个人流量最大的摊位站 3 分钟","观察：哪种菜今天最便宜？","买一样预算内的时令水果","录一段 15 秒的环境音，回家听"], budget:20, energy:2, min:60, outdoor:true, rainOk:true, mood:["lively","heal"]},
+  {id:"rain_walk", t:"雨中散步签", d:"专门为这场雨出门。雨天的城市是另一部电影。", steps:["带伞，穿不怕水的鞋","找 3 个「只有下雨天才有的画面」：积水倒影、屋檐下躲雨的人、雨刷的节奏","进一家能看雨的店，点杯热饮","写 3 行短句，像俳句那样"], budget:25, energy:2, min:45, outdoor:true, rainOk:true, mood:["quiet","heal"], weatherNeed:"rain"},
+  {id:"sunset", t:"落日收集签", d:"在日落前后出门，找一个能看天色的高处或开阔处。", steps:["查今天日落时间，提前一点出发","楼顶、天桥、开阔路口均可，安全第一","先看 5 分钟再拍 {n} 张","给今天的天色打 1-10 分并记录理由"], budget:0, energy:2, min:45, outdoor:true, rainOk:false, times:["afternoon","evening"], mood:["heal","quiet"]},
+  {id:"night_light", t:"夜灯巡查签", d:"夜晚出门，只拍「发光的招牌和窗户」，像萤火虫一样收集光。", steps:["选一条商业小街","拍 {n} 张发光物：霓虹、便利店灯箱、别人家的窗","找出其中最孤独的一个光源","回家给它写一句话"], budget:0, energy:2, min:45, outdoor:true, rainOk:false, times:["night","evening"], mood:["quiet","fresh"]},
+  {id:"park_oldman", t:"公园观察签", d:"去最近的公园，看人们如何理直气壮地浪费时间。", steps:["找下棋/打牌的一桌，观战 10 分钟","数一下公园里有多少种声音","长椅上坐满 15 分钟，不看手机","用一句话总结：这个公园的「气质」"], budget:0, energy:1, min:45, outdoor:true, rainOk:false, mood:["heal","lively"]},
+  {id:"cinema", t:"陌生影片签", d:"去电影院看一场你平时绝不会选的片子。", steps:["打开购票 App，排除所有「想看」的","选一部类型最陌生的","看完别急着走，听完片尾曲","写 100 字：它最打动或最冒犯你的地方"], budget:50, energy:1, min:90, outdoor:false, rainOk:true, mood:["fresh","quiet"]},
+  {id:"library", t:"图书馆盲盒签", d:"去图书馆或书店，抽一本你永远不会主动拿的书。", steps:["走到离你专业/兴趣最远的书架","闭眼抽一本，读 30 页","抄下最奇怪的一句话","想想：什么样的人会把这本书当宝贝"], budget:0, energy:1, min:60, outdoor:false, rainOk:true, mood:["quiet","fresh"]},
+  {id:"breakfast", t:"早餐远征签", d:"为了吃早餐专门出门，去一家排队超过 5 人的早点铺。", steps:["问 1 个本地人（保安/环卫/邻居）哪家最好吃","排队时点前面那个人点的东西","慢慢吃，观察来吃早饭的都是什么人","给这顿早餐写个 50 字点评"], budget:20, energy:2, min:45, outdoor:true, rainOk:true, times:["morning"], mood:["lively","heal"]},
+  {id:"bridge", t:"天桥驻留签", d:"找一座人行天桥或过街通道，在正中站 15 分钟，看车流像河一样经过。", steps:["选一个车流多的天桥或路口","数 3 分钟内经过多少辆车","拍 1 张车流照片","想一个问题：这些人都要去哪"], budget:0, energy:1, min:30, outdoor:true, rainOk:false, mood:["quiet","fresh"]},
+  {id:"secondhand", t:"旧物淘宝签", d:"去旧货市场或二手书店，用预算买一个「有故事的旧物」。", steps:["搜附近旧货市场/二手书店","和一件旧物「对视」，猜它的前任主人","砍价一次，哪怕只便宜 1 块","回家给它拍张证件照，写它的「前世」"], budget:30, energy:2, min:60, outdoor:true, rainOk:true, mood:["fresh","quiet"]},
+  {id:"rooftop", t:"高处眺望签", d:"找一个能上去的高处（天台、天桥、楼道窗口），重新看看你住的城市。", steps:["确认安全与可进入性，不翻不闯","找到你家的方向","找出 3 个你从没注意过的建筑","拍 1 张俯瞰，命名「我的城市切片」"], budget:0, energy:1, min:30, outdoor:true, rainOk:false, mood:["fresh","quiet"]},
+  {id:"tea_house", t:"本地下午签", d:"找一家茶馆、咖啡馆或社区活动室，混入本地人的下午时光。", steps:["点一杯最便宜的饮品","坐在老人或常客附近，听他们聊天（别盯手机）","学一句本地方言或一个本地说法","记录一个你听不懂但觉得有趣的词"], budget:15, energy:1, min:60, outdoor:false, rainOk:true, times:["afternoon"], mood:["lively","heal"]},
+  {id:"smell_map", t:"气味地图签", d:"用鼻子代替眼睛，给附近街区画一张气味地图。", steps:["慢走 30 分钟，专注分辨气味","记录 5 种气味及位置：烘焙店、理发店、花坛、水果摊……","找出「这条街的标志性气味」","回家按记忆画一张简笔气味地图"], budget:0, energy:2, min:60, outdoor:true, rainOk:false, mood:["fresh","quiet"]},
+  {id:"door_photo", t:"门面收集签", d:"只拍「门」。老木门、卷帘门、贴着转让的门——门是街区的表情。", steps:["定一条 1 公里内的路线","拍 {n} 扇有故事的门","选一扇最想推开的","写 50 字：门后面可能是什么"], budget:0, energy:1, min:45, outdoor:true, rainOk:false, mood:["quiet","fresh"]},
+  {id:"ferry", t:"水边散步签", d:"去最近的河边、湖边、池塘或喷泉，任何有水的地方都行。", steps:["找一处最近的水边：河、湖、池塘、甚至小区喷泉","在水边待满 20 分钟","观察水面上的东西：船、倒影、落叶、波纹","拍 1 张「水与城市的关系」"], budget:0, energy:1, min:45, outdoor:true, rainOk:false, mood:["heal","fresh"]},
+  {id:"free_museum", t:"免费展馆签", d:"搜一个你从没进过的免费展馆：城市规划馆、校史馆、社区陈列室都算。", steps:["地图搜「展馆/陈列馆/博物馆」筛选免费","选一个名字最陌生的","找到馆内最冷门的展品","给它拍张照并抄下说明牌"], budget:0, energy:1, min:60, outdoor:false, rainOk:true, mood:["quiet","fresh"]},
+  {id:"stranger_view", t:"换位散步签", d:"假装你是第一次来这座城市的游客，重走你每天经过的路。", steps:["把手机调成「游客模式」：什么都值得拍","拍 3 张你每天路过却从没拍过的东西","发现一个你每天忽略的细节","写 100 字游记，开头：「第一次来到这座城市……」"], budget:0, energy:1, min:45, outdoor:true, rainOk:true, mood:["fresh","heal"]},
+  {id:"noodle_tour", t:"一碗面巡礼签", d:"找一家本地人推荐的粉面小店，完整地、不看手机地吃完一碗。", steps:["搜「附近 粉/面」按评价选非连锁的","坐能看见厨房的位置","完整吃完，品味汤头","给老板一句当面夸奖"], budget:25, energy:1, min:45, outdoor:true, rainOk:true, mood:["heal","lively"]},
+  {id:"shadow_noon", t:"影子测量签", d:"在一天中影子最特别的时候出门，只拍影子。", steps:["晴天才有的限定任务","拍 {n} 个影子：人的、栏杆的、树的","找最长的一个影子","回家查：为什么影子方向是这样"], budget:0, energy:1, min:30, outdoor:true, rainOk:false, mood:["quiet","fresh"]},
+  {id:"community", t:"社区秘径签", d:"钻进你从未进过的隔壁小区（开放小区），看看别人的日常生活布景。", steps:["选一个开放式老小区","找小区里的「野生设施」：自制花架、楼道猫窝","数有多少种晾晒的东西","从哪个门出来，就记住那个门"], budget:0, energy:2, min:45, outdoor:true, rainOk:false, mood:["fresh","quiet"]},
+  {id:"station", t:"人流观察签", d:"去一个人来人往的枢纽——公交站、地铁口、学校或商场门口，看人们匆匆路过。", steps:["选一个人流多的地方：地铁口/公交站/商场门口/校门口","站或坐 15 分钟，只看不动","观察：谁在等人？谁在赶路？谁在张望？","猜 3 个路人的故事"], budget:5, energy:1, min:30, outdoor:true, rainOk:true, mood:["lively","quiet"]},
+  {id:"midnight_store", t:"深夜便利店签", d:"深夜的便利店是城市的心跳监测点。坐一会儿，看来来往往的人。", steps:["选一家 24 小时便利店，买热饮或饭团","靠窗坐 20 分钟","记录这个时段进来的 3 类人","写 50 字：深夜便利店收留了什么"], budget:20, energy:1, min:30, outdoor:false, rainOk:true, times:["night"], mood:["quiet","heal"]},
+  {id:"climb_view", t:"登高望远签", d:"找个高处俯瞰城市：小山、观景台、天桥、高层楼道都可以。", steps:["选一个能上去的高处，安全第一","登顶后找东南西北各一个地标","拍 1 张全景 + 1 张脚下的路","下来时走一条不同的路"], budget:10, energy:2, min:60, outdoor:true, rainOk:false, mood:["fresh","heal"]},
+  {id:"food_street", t:"小吃盲选签", d:"去附近的小吃摊或餐饮街，用「第 3 个排队超 5 人的摊」法则选择。", steps:["先完整走一遍，什么都别买","找到第 3 个排队超 5 人的摊","排到时点招牌，预算 {budget} 元内","边吃边观察老板的手速"], budget:40, energy:2, min:60, outdoor:true, rainOk:true, times:["evening","night"], mood:["lively","heal"]},
+  {id:"alley", t:"小巷探索签", d:"专门走小巷，不走大路。城市的秘密都藏在毛细血管里。", steps:["选一片老街区，或你小区周边的小路","只走小巷、支路、楼间通道","发现 3 个「只有小巷里才有的东西」","如果迷路了就当是加分项"], budget:10, energy:2, min:60, outdoor:true, rainOk:false, mood:["fresh","quiet"]},
+  {id:"window_seat", t:"靠窗观察签", d:"找一家二楼靠窗的咖啡馆/奶茶店，以上帝视角看一条街 30 分钟。", steps:["点一杯预算内的饮品占座","选定一个「主角」持续观察（一棵树/一个报摊/一个路口）","记录这条街 30 分钟内发生的小事","写 100 字《某街 30 分钟纪实》"], budget:30, energy:1, min:45, outdoor:false, rainOk:true, times:["afternoon"], mood:["quiet","heal"]},
+  {id:"bike_loop", t:"骑行环线签", d:"扫一辆共享单车，在附近骑一个轻松的环线。", steps:["规划一个 30-40 分钟的环线","每骑 10 分钟停下来拍 1 张","找 3 个「骑车才能发现的视角」","终点奖励自己一瓶冷饮"], budget:10, energy:2, min:60, outdoor:true, rainOk:false, mood:["fresh","lively"]},
+  {id:"photo_rime", t:"一物十拍签", d:"选一个普通的物体（消防栓/垃圾桶/电线杆），在附近找若干个不同的同类拍下来。", steps:["出门遇到的第一个该类物体即为「命运之选」","走 {min} 分钟集齐 {n} 个","拍成统一构图","拼图发一条仅自己可见的朋友圈"], budget:0, energy:2, min:60, outdoor:true, rainOk:false, mood:["fresh","quiet"]},
+  {id:"book_exchange", t:"漂流书投放签", d:"带一本你读过的好书出门，把它留在公共场所，附一张字条。", steps:["选一本舍得送出的书","写张字条：「这本书现在归你，看完请继续放漂」","留在咖啡馆/公园长椅/地铁站","远远观察 10 分钟，看谁捡走它"], budget:0, energy:1, min:45, outdoor:true, rainOk:true, mood:["heal","quiet"]},
+  {id:"wet_market_night", t:"夜摊散场签", d:"晚上去附近最热闹的餐饮街，看它快收摊时的样子。", steps:["21 点后到达（或当地收摊前 1 小时）","观察摊主收摊的顺序和默契","往往能买到打折的收尾小吃","拍 1 张「散场」主题照片"], budget:25, energy:2, min:45, outdoor:true, rainOk:false, times:["night"], mood:["quiet","fresh"]},
+  {id:"letter_self", t:"给未来的信签", d:"出门找一个安静的角落，给半年后的自己写一封信。", steps:["带上纸笔（或手机备忘录）","找公园长椅/河边台阶坐下","写下：此刻的城市、此刻的你、一个期望","密封藏好，设半年后的提醒"], budget:5, energy:1, min:45, outdoor:true, rainOk:false, mood:["quiet","heal"]},
+  {id:"dawn_city", t:"清晨城市签", d:"比平时早一点出门，看看城市开机的过程。", steps:["清晨出门，不用赶日出，天刚亮即可","看环卫工、早餐铺开门、第一班公交","拍 {n} 张「城市醒来」的照片","吃一顿刚出锅的早餐作为奖励"], budget:15, energy:2, min:45, outdoor:true, rainOk:false, times:["morning"], mood:["fresh","heal"]},
+  {id:"street_music", t:"街头声音签", d:"去寻找城市的现场声音：店铺音响、广场舞、吆喝、公园里练乐器的人。", steps:["循声而行，听到有节奏的声音就朝它走","完整听完一段再离开","分辨：这是人声、乐器还是音箱？","记录今天城市为你「演奏」的曲目"], budget:5, energy:1, min:45, outdoor:true, rainOk:false, times:["evening","afternoon"], mood:["lively","heal"]},
+  {id:"snow_city", t:"雪日限定签", d:"雪天限定：出门看熟悉的城市被白色重新排版。", steps:["穿暖，戴手套","找 3 个「被雪改变形态的物体」","踩一块没人踩过的雪，听声音","回来喝热的，写 3 行短句"], budget:15, energy:2, min:45, outdoor:true, rainOk:true, mood:["heal","fresh"], weatherNeed:"snow"},
+  /* ---- V2 新增 15 签 ---- */
+  {id:"mall_archive", t:"老街考古签", d:"去附近最老的商场或老街，寻找它还停留在旧时代的证据。", steps:["选一家老商场，或一条有年头的老街","找 3 个「年代残留物」：旧招牌、关张的门面、老式装修","拍 1 张最有年代感的画面","写 100 字：这条街的黄金时代是什么样"], budget:0, energy:1, min:45, outdoor:true, rainOk:true, mood:["fresh","quiet"]},
+  {id:"home_movie", t:"同年电影签", d:"看你出生那一年的电影代表作，和那个年代的自己打个照面。", steps:["查你出生那年的年度佳片/获奖名单","选一部从没看过的，关灯、手机翻面","看完先写 100 字直觉感受，别急着看影评","再去看看别人怎么夸/怎么骂它"], budget:0, energy:1, min:120, outdoor:false, rainOk:true, times:["afternoon","evening","night"], mood:["quiet","heal"]},
+  {id:"taichi", t:"晨练潜入签", d:"混进公园或广场的锻炼队伍，偷师大爷大妈的养生绝学。", steps:["早晨或傍晚到最近的公园/广场","找到太极/八段锦/广场舞队伍，站后排跟着比划 10 分钟","观察队伍里谁是「灵魂人物」","活动完吃一顿热乎的"], budget:10, energy:1, min:45, outdoor:true, rainOk:false, times:["morning","afternoon","evening"], mood:["lively","heal"]},
+  {id:"stairs_climb", t:"垂直城市签", d:"不坐电梯，用楼梯爬一栋楼，从高处重新认识你的城市。", steps:["选一栋允许进入的楼（商场/写字楼/自家楼栋）","爬楼梯上去，不用到顶，量力而行","在楼梯间窗口拍 1 张俯瞰","下楼奖励自己一杯冰饮"], budget:5, energy:2, min:30, outdoor:true, rainOk:true, mood:["fresh"]},
+  {id:"metro_hike", t:"地铁徒步签", d:"沿一条地铁线或主干道走 2 站，看看平时掠过的地方在地面上是什么样。", steps:["选一条常坐的线路，挑连续的 2 站","从 A 站走到 B 站，沿主路走","对比：两个站周边哪里最出乎意料？","拍 {n} 张「地面版沿途」"], budget:5, energy:2, min:60, outdoor:true, rainOk:false, mood:["fresh","quiet"]},
+  {id:"compliment", t:"真诚夸奖签", d:"今天的任务：真诚地夸 3 个人。夸具体的事，看对方的反应。", steps:["夸一位服务者：店员的打包手法、环卫工扫净的路面","夸一个陌生人的穿搭或状态（自然、不打扰）","夸一个你认识的人，发消息也行","记录三次夸奖得到的不同反应"], budget:0, energy:1, min:30, outdoor:true, rainOk:true, mood:["lively","heal"]},
+  {id:"photo_word", t:"一字主题签", d:"出门前定一个字（红 / 圆 / 旧 / 影 / 门），今天只拍与这个字有关的画面。", steps:["闭眼在纸上写一个字，或让朋友随便发一个","带着这个字出门，见到相关画面就拍","集满 {n} 张后回家","按这个字排个版，配一句标题"], budget:0, energy:1, min:45, outdoor:true, rainOk:false, mood:["fresh","quiet"]},
+  {id:"memory_map", t:"记忆地图签", d:"不看任何地图，凭记忆画出住所周边一公里，然后出门实地校对。", steps:["拿纸笔画：道路、店铺、标志性物","标出你「确定」和「不确定」的部分","出门走一圈，用红笔修正错误","数一数：记错了几处？最意外的是哪处？"], budget:0, energy:2, min:60, outdoor:true, rainOk:false, mood:["quiet","fresh"]},
+  {id:"cat_census", t:"街区猫口普查签", d:"对附近街区的流浪猫狗进行一次非官方普查。", steps:["慢走 40 分钟，重点搜索车底、花坛、墙头","每发现一只，记录：位置、毛色、估计年龄","给每只起一个临时代号","绘制一张《本街区猫口分布图》"], budget:10, energy:2, min:45, outdoor:true, rainOk:false, mood:["heal","fresh"]},
+  {id:"recipe_interview", t:"家常菜访谈签", d:"向一位会做饭的人（家人/邻居/小店老板）讨教一道菜的完整做法。", steps:["选定一道你爱吃但不会做的菜","找到愿意教你的人，问清每一步和火候","回家按方复刻一次","记录：复刻版和原版差在哪"], budget:30, energy:1, min:90, outdoor:false, rainOk:true, mood:["heal","lively"]},
+  {id:"sound_hunt", t:"声音采集签", d:"用录音代替拍照，采集 5 种「这座城市的声音标本」。", steps:["打开手机录音，目标：叫卖、地铁报站、蝉鸣、广场舞、雨棚滴水……","每种录 15 秒以上","回家后按顺序拼接成一段 1 分钟音频","命名《今日城市声带》并写一句话简介"], budget:0, energy:1, min:45, outdoor:true, rainOk:true, mood:["fresh","quiet"]},
+  {id:"notice_board", t:"公告栏深读签", d:"认真读完小区/学校公告栏上的每一张通知，那里有被忽略的社区新闻。", steps:["找到公告栏，从最旧的一张读起","记录 3 条有趣信息：寻物、停水、活动、处罚","推断：这个社区最近在为什么事操心？","顺手拍 1 张最有时代感的通知"], budget:0, energy:1, min:30, outdoor:true, rainOk:true, mood:["quiet","fresh"]},
+  {id:"reverse_commute", t:"逆向通勤签", d:"晚高峰时坐一趟与人流相反方向的车，看空荡车厢和对面的人潮。", steps:["下班高峰时段出发","选一条进城线路，你往城外坐","观察：同方向的乘客都有什么共同点？","在终点附近找家小店吃晚饭再回"], budget:25, energy:1, min:90, outdoor:true, rainOk:true, times:["evening"], mood:["fresh","quiet"]},
+  {id:"night_snack_rank", t:"夜宵横评签", d:"同品类夜宵买 2-3 家，做一次严肃的个人横评。", steps:["选一个品类：烤冷面、炸串、炒粉、柠檬茶……","买 2-3 家不同摊位的同品类","从口感、分量、性价比逐项打分","宣布你心中的街区冠军，写 50 字颁奖词"], budget:40, energy:2, min:60, outdoor:true, rainOk:true, times:["night"], mood:["lively","fresh"]},
+  {id:"zine_page", t:"一页城市志签", d:"把最近的一次探索做成一页「城市志」：一张照片 + 手绘地图 + 100 字。", steps:["出门完成一次小探索（或就用今天的经历）","回家选 1 张最满意的照片打印或画下来","配上手绘路线和 100 字说明","编号 No.001——你的城市志创刊号"], budget:10, energy:1, min:60, outdoor:false, rainOk:true, mood:["quiet","fresh"]},
+  /* ---- V3 新增 10 个居家任务 ---- */
+  {id:"home_clean_drawer", t:"抽屉整理签", d:"收拾一个乱掉的抽屉或桌面，给它一次体面的重生。", steps:["挑一个最乱的抽屉或桌面","把东西全拿出来，分三堆：留下/换地方/处理","擦干净，重新归位","拍一张前后对比照"], budget:0, energy:1, min:30, outdoor:false, rainOk:true, mood:["fresh","heal"]},
+  {id:"home_album", t:"相册回忆签", d:"翻手机相册，挑 3 张有故事的照片，把那一刻写下来。", steps:["打开相册，倒序往前翻","挑 3 张让你停顿的照片","每张写一句：当时在哪、和谁、什么心情","把三句话存进手账"], budget:0, energy:1, min:45, outdoor:false, rainOk:true, mood:["heal","quiet"]},
+  {id:"home_cook", t:"新菜挑战签", d:"用家里现有的食材，做一道你从没做过的菜。", steps:["盘点冰箱和柜子里有什么","想一道用现有食材能做的、没做过的菜","照着做，记录过程和翻车点","拍成品，写 50 字试吃报告"], budget:20, energy:2, min:60, outdoor:false, rainOk:true, mood:["heal","lively"]},
+  {id:"home_drink", t:"特饮调制签", d:"用家里的材料调一杯你从没喝过的饮品，给它起个名字。", steps:["搜「自制特调」找灵感，或用柠檬/茶/奶/气泡水自由发挥","调一杯，记录配方","尝一口，给它命名（如「周四夜的海风」）","拍成品照，写一句口味评价"], budget:15, energy:1, min:30, outdoor:false, rainOk:true, mood:["fresh","heal"]},
+  {id:"home_music", t:"整张专辑签", d:"完整听一张你从没完整听过的专辑，不切歌、不倍速、不看手机。", steps:["选一张久仰大名或随机抽到的专辑","关掉通知，从头到尾听完","记住最击中你的那一首","写 50 字：这张专辑让你想到什么"], budget:0, energy:1, min:45, outdoor:false, rainOk:true, mood:["quiet","heal"]},
+  {id:"home_doc", t:"纪录片签", d:"看一部你平时不会点开的纪录片，认识一个陌生的世界。", steps:["在视频平台找一部评分高但你从没看过的纪录片","完整看完","记下 3 个刷新你认知的事实","写 100 字观后：它改变了你的哪个看法"], budget:0, energy:1, min:60, outdoor:false, rainOk:true, mood:["quiet","fresh"]},
+  {id:"home_read", t:"静读三十页签", d:"关掉所有通知，认真读 30 页书，找回专注的感觉。", steps:["选一本想读但一直没开始的书","手机静音、倒扣放远","读 30 页，不跳行不刷手机","抄下最有感触的一句话"], budget:0, energy:1, min:45, outdoor:false, rainOk:true, mood:["quiet","heal"]},
+  {id:"home_wardrobe", t:"衣柜断舍离签", d:"整理衣柜，选出 3 件不再穿的衣服，跟它们好好告别。", steps:["把衣柜里一个区域翻出来","试穿判断：还心动吗？还合身吗？","挑出 3 件决定处理的","拍照记录，考虑捐/卖/改造"], budget:0, energy:2, min:45, outdoor:false, rainOk:true, mood:["fresh","heal"]},
+  {id:"home_old_box", t:"旧物盒签", d:"打开一个尘封的抽屉或盒子，找出最意外的一件旧物。", steps:["找一个很久没动过的抽屉/盒子","翻出最让你意外或久违的一件东西","回忆它的来历和当时的故事","拍张照，写一段它的「前世今生」"], budget:0, energy:1, min:30, outdoor:false, rainOk:true, mood:["heal","quiet"]},
+  {id:"home_letter", t:"手写信签", d:"手写一封信给某个人——寄出去，或者只是收好留给自己。", steps:["选定收信人：朋友、家人、或未来的自己","用纸笔认真写，不敷衍","拍照留档，或真的寄出去","记录：写信时你想到了什么"], budget:5, energy:1, min:45, outdoor:false, rainOk:true, mood:["heal","quiet"]}
+];
+
+const LEVELS = ["上上签","上吉","中吉","小吉","末吉 · 但行动即转运"];
+const KEY_HIST = "leq_history_v2";
+const KEY_DONE = "leq_done_v2";
+
+/* ============ 数据层：纯本地 IndexedDB（可保存压缩照片） ============ */
+const DB_NAME = "life_explore_lottery";
+const DB_STORE = "app_state";
+const DB_KEY = "current";
+let records = [];
+let doneIds = [];
+let guessedLoc = "";
+
+function loadLS(k, def){ try{ return JSON.parse(localStorage.getItem(k)) ?? def; }catch{ return def; } }
+function saveLS(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
+
+function openLocalDB(){
+  return new Promise((resolve, reject)=>{
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = ()=>{
+      if (!req.result.objectStoreNames.contains(DB_STORE)) req.result.createObjectStore(DB_STORE);
+    };
+    req.onsuccess = ()=> resolve(req.result);
+    req.onerror = ()=> reject(req.error);
+  });
+}
+
+async function readLocalState(){
+  try{
+    const db = await openLocalDB();
+    const state = await new Promise((resolve, reject)=>{
+      const req = db.transaction(DB_STORE, "readonly").objectStore(DB_STORE).get(DB_KEY);
+      req.onsuccess = ()=> resolve(req.result);
+      req.onerror = ()=> reject(req.error);
+    });
+    db.close();
+    if (state) return state;
+  }catch(err){ console.warn("IndexedDB 读取失败，将使用兼容存储", err); }
+  return {records: loadLS(KEY_HIST, []), doneIds: loadLS(KEY_DONE, [])};
+}
+
+async function saveLocalState(){
+  const state = {records, doneIds};
+  try{
+    const db = await openLocalDB();
+    await new Promise((resolve, reject)=>{
+      const req = db.transaction(DB_STORE, "readwrite").objectStore(DB_STORE).put(state, DB_KEY);
+      req.onsuccess = ()=> resolve();
+      req.onerror = ()=> reject(req.error);
+    });
+    db.close();
+  }catch(err){
+    saveLS(KEY_HIST, records);
+    saveLS(KEY_DONE, doneIds);
+  }
+}
+
+async function boot(){
+  const state = await readLocalState();
+  records = Array.isArray(state.records) ? state.records : [];
+  doneIds = Array.isArray(state.doneIds) ? state.doneIds : [];
+  renderHist();
+  renderMemory();
+}
+
+/* ============ 音频系统 (Web Audio API 实时合成：音效 + 禅意背景音乐) ============ */
+const KEY_MUTED = "leq_sound_muted";
+const KEY_BGM = "leq_bgm_enabled";
+
+let audioCtx = null;
+let isMuted = loadLS(KEY_MUTED, false);
+let isBgmOn = loadLS(KEY_BGM, false);
+
+function getAudioContext(){
+  if (!audioCtx){
+    const AudioCtor = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtor) audioCtx = new AudioCtor();
+  }
+  if (audioCtx && audioCtx.state === "suspended"){
+    audioCtx.resume().catch(()=>{});
+  }
+  return audioCtx;
+}
+
+// 首次交互自动唤醒音频上下文，并根据用户保存的偏好启动背景音乐
+["click", "touchstart"].forEach(ev => {
+  document.addEventListener(ev, () => {
+    const ctx = getAudioContext();
+    if (ctx && isBgmOn && !isBgmRunning) {
+      startBGM();
+    }
+  }, { once: true });
+});
+
+/* ---------- 1. 动作音效部分 ---------- */
+
+/* 摇签筒木签撞击声（木质共振 + 白噪声颗粒） */
+function playBambooClack(ctx, time, pitchOffset = 0){
+  try {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+
+    filter.type = "bandpass";
+    filter.frequency.setValueAtTime(420 + pitchOffset * 90 + (Math.random() * 120 - 60), time);
+    filter.Q.setValueAtTime(3.5 + Math.random() * 2, time);
+
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(170 + pitchOffset * 40 + Math.random() * 40, time);
+    osc.frequency.exponentialRampToValueAtTime(50, time + 0.05);
+
+    gain.gain.setValueAtTime(0.35 + Math.random() * 0.15, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.055);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(time);
+    osc.stop(time + 0.06);
+
+    const bufLen = Math.floor(ctx.sampleRate * 0.035);
+    const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufLen; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.007));
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    const nFilter = ctx.createBiquadFilter();
+    nFilter.type = "bandpass";
+    nFilter.frequency.setValueAtTime(1100 + Math.random() * 300, time);
+    nFilter.Q.setValueAtTime(2, time);
+    const nGain = ctx.createGain();
+    nGain.gain.setValueAtTime(0.12, time);
+    nGain.gain.exponentialRampToValueAtTime(0.001, time + 0.035);
+
+    noise.connect(nFilter);
+    nFilter.connect(nGain);
+    nGain.connect(ctx.destination);
+    noise.start(time);
+  } catch(e){}
+}
+
+function playShakeSound(){
+  if (isMuted) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  const timings = [0, 0.08, 0.18, 0.28, 0.40, 0.52, 0.63, 0.75];
+  timings.forEach((dt, i) => {
+    playBambooClack(ctx, now + dt, i % 3);
+  });
+}
+
+/* 出签揭晓灵动和弦（清脆风铃/木琴音色） */
+function playFortuneRevealSound(){
+  if (isMuted) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  const freqs = [440, 554.37, 659.25, 880]; // A4, C#5, E5, A5
+  freqs.forEach((f, i) => {
+    try {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(f, now + i * 0.07);
+
+      gain.gain.setValueAtTime(0.001, now + i * 0.07);
+      gain.gain.exponentialRampToValueAtTime(0.2, now + i * 0.07 + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.07 + 0.75);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now + i * 0.07);
+      osc.stop(now + i * 0.07 + 0.8);
+    } catch(e){}
+  });
+}
+
+/* 存入手账盖印章声（低沉木印戳纸音） */
+function playStampSound(){
+  if (isMuted) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  try {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(150, now);
+    osc.frequency.exponentialRampToValueAtTime(35, now + 0.12);
+
+    gain.gain.setValueAtTime(0.4, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.15);
+
+    const bufLen = Math.floor(ctx.sampleRate * 0.06);
+    const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufLen; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.015));
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(500, now);
+    const nGain = ctx.createGain();
+    nGain.gain.setValueAtTime(0.25, now);
+    nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+    noise.connect(filter);
+    filter.connect(nGain);
+    nGain.connect(ctx.destination);
+    noise.start(now);
+  } catch(e){}
+}
+
+/* 选项点击轻柔音 */
+function playClickSound(){
+  if (isMuted) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  try {
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(750, now);
+    osc.frequency.exponentialRampToValueAtTime(450, now + 0.02);
+    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.02);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.025);
+  } catch(e){}
+}
+
+/* ---------- 2. 温暖治愈八音盒背景音乐 (Generative Cozy Music Box) ---------- */
+let bgmMasterGain = null;
+let bgmFilter = null;
+let bgmTimer = null;
+let isBgmRunning = false;
+
+// 温暖明朗的 C 大调五声音阶（温暖、治愈、如阳光洒在木桌上的无忧无虑感）
+const WARM_NOTES = [
+  261.63, // C4 (1)
+  293.66, // D4 (2)
+  329.63, // E4 (3)
+  392.00, // G4 (5)
+  440.00, // A4 (6)
+  523.25, // C5 (1')
+  587.33, // D5 (2')
+  659.25, // E5 (3')
+  783.99  // G5 (5')
+];
+
+// 温暖旋律动机库 (如八音盒轻柔转动的治愈小短句)
+const MOTIFS = [
+  [0, 2, 3, 5],       // 1 3 5 1' (温暖上行琶音)
+  [5, 4, 3, 2, 0],    // 1' 6 5 3 1 (轻柔下行摇篮曲)
+  [2, 3, 4, 3],       // 3 5 6 5 (微风拂面)
+  [0, 3, 5],          // 1 5 1' (空灵三连音)
+  [3, 5, 7, 5],       // 5 1' 3' 1' (高音阳光微光)
+  [0, 2, 4, 5, 2],    // 1 3 6 1' 3 (八音盒散步)
+  [4, 3, 2, 0]        // 6 5 3 1 (平静归家)
+];
+
+function initBgmNodes(ctx){
+  if (bgmMasterGain) return;
+
+  // 主音量增益
+  bgmMasterGain = ctx.createGain();
+  bgmMasterGain.gain.setValueAtTime(0.0001, ctx.currentTime);
+
+  // 温暖声学低通滤波：圆润温暖，彻底过滤尖锐毛刺与生硬敲击
+  bgmFilter = ctx.createBiquadFilter();
+  bgmFilter.type = "lowpass";
+  bgmFilter.frequency.setValueAtTime(2000, ctx.currentTime);
+  bgmFilter.Q.setValueAtTime(0.7, ctx.currentTime);
+
+  bgmMasterGain.connect(bgmFilter);
+  bgmFilter.connect(ctx.destination);
+}
+
+/* 合成单个圆润温暖的八音盒音符 */
+function playWarmMusicBoxNote(ctx, freq, time, duration = 1.6, volScale = 1.0){
+  if (!isBgmRunning) return;
+  try {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    // 纯净正弦波（温暖底色）
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, time);
+
+    // 纯八度柔和泛音（金属簧片/音叉质感）
+    const overtone = ctx.createOscillator();
+    const otGain = ctx.createGain();
+    overtone.type = "sine";
+    overtone.frequency.setValueAtTime(freq * 2, time);
+
+    const baseVol = 0.05 * volScale;
+    const decay = Math.max(1.2, duration * 1.2);
+
+    // 平滑渐入（彻底消除爆音与毛刺）与自然指数长余音
+    gain.gain.setValueAtTime(0.0001, time);
+    gain.gain.linearRampToValueAtTime(baseVol, time + 0.016);
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + decay);
+
+    // 泛音快速消散
+    otGain.gain.setValueAtTime(0.0001, time);
+    otGain.gain.linearRampToValueAtTime(baseVol * 0.12, time + 0.012);
+    otGain.gain.exponentialRampToValueAtTime(0.0001, time + decay * 0.45);
+
+    osc.connect(gain);
+    gain.connect(bgmMasterGain);
+    overtone.connect(otGain);
+    otGain.connect(bgmMasterGain);
+
+    osc.start(time);
+    osc.stop(time + decay + 0.08);
+    overtone.start(time);
+    overtone.stop(time + decay * 0.5);
+  } catch(e){}
+}
+
+/* 随机演奏一句温暖治愈短句 */
+function playNextWarmPhrase(){
+  if (!isBgmRunning || !audioCtx) return;
+  try {
+    const ctx = audioCtx;
+    const now = ctx.currentTime;
+
+    // 随机选择一个旋律短句
+    const motif = MOTIFS[Math.floor(Math.random() * MOTIFS.length)];
+    const noteStep = 0.26 + Math.random() * 0.08; // 音符间隔（八音盒轻摇节奏）
+
+    motif.forEach((idx, i) => {
+      const freq = WARM_NOTES[idx];
+      const noteTime = now + i * noteStep;
+      const isLast = (i === motif.length - 1);
+      const dur = isLast ? 2.2 : 1.4;
+      const vol = isLast ? 1.05 : (0.85 + Math.random() * 0.2);
+      playWarmMusicBoxNote(ctx, freq, noteTime, dur, vol);
+    });
+
+    // 25% 概率在短句首音加入低音暖音共鸣
+    if (Math.random() < 0.25) {
+      playWarmMusicBoxNote(ctx, 130.81, now, 2.5, 0.4); // C3
+    }
+  } catch(e){}
+
+  // 句与句之间的自然呼吸留白（2.4 ~ 4.6 秒）
+  const nextDelay = 2400 + Math.random() * 2200;
+  bgmTimer = setTimeout(playNextWarmPhrase, nextDelay);
+}
+
+function startBGM(){
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (isBgmRunning) return;
+  isBgmRunning = true;
+  initBgmNodes(ctx);
+
+  const now = ctx.currentTime;
+  bgmMasterGain.gain.cancelScheduledValues(now);
+  bgmMasterGain.gain.setValueAtTime(bgmMasterGain.gain.value || 0.0001, now);
+  bgmMasterGain.gain.linearRampToValueAtTime(0.85, now + 1.2);
+
+  if (bgmTimer) clearTimeout(bgmTimer);
+  playNextWarmPhrase();
+}
+
+function stopBGM(){
+  if (!isBgmRunning) return;
+  isBgmRunning = false;
+  if (bgmTimer){ clearTimeout(bgmTimer); bgmTimer = null; }
+  if (bgmMasterGain && audioCtx){
+    const now = audioCtx.currentTime;
+    bgmMasterGain.gain.cancelScheduledValues(now);
+    bgmMasterGain.gain.setValueAtTime(bgmMasterGain.gain.value, now);
+    bgmMasterGain.gain.linearRampToValueAtTime(0.0001, now + 0.8);
+  }
+}
+
+/* ---------- 3. UI 按钮更新与绑定 ---------- */
+function updateSoundBtnUI(){
+  const btn = document.getElementById("soundToggle");
+  if (!btn) return;
+  if (isMuted){
+    btn.innerHTML = "🔇 音效关";
+    btn.classList.remove("on");
+    btn.classList.add("muted");
+  } else {
+    btn.innerHTML = "🔊 音效开";
+    btn.classList.add("on");
+    btn.classList.remove("muted");
+  }
+}
+
+function updateBgmBtnUI(){
+  const btn = document.getElementById("bgmToggle");
+  if (!btn) return;
+  if (isBgmOn){
+    btn.innerHTML = "🎵 音乐开";
+    btn.classList.add("on");
+    btn.classList.remove("muted");
+  } else {
+    btn.innerHTML = "🎵 音乐关";
+    btn.classList.remove("on");
+    btn.classList.add("muted");
+  }
+}
+
+document.getElementById("soundToggle").addEventListener("click", ()=>{
+  isMuted = !isMuted;
+  saveLS(KEY_MUTED, isMuted);
+  updateSoundBtnUI();
+  if (!isMuted) playClickSound();
+});
+
+document.getElementById("bgmToggle").addEventListener("click", ()=>{
+  isBgmOn = !isBgmOn;
+  saveLS(KEY_BGM, isBgmOn);
+  updateBgmBtnUI();
+  if (isBgmOn){
+    startBGM();
+    playClickSound();
+  } else {
+    stopBGM();
+  }
+});
+
+updateSoundBtnUI();
+updateBgmBtnUI();
+
+/* ============ 状态收集 ============ */
+function pickChips(id){
+  const box = document.getElementById(id);
+  box.addEventListener("click", e=>{
+    const c = e.target.closest(".chip"); if(!c) return;
+    box.querySelectorAll(".chip").forEach(x=>x.classList.remove("on"));
+    c.classList.add("on");
+    playClickSound();
+  });
+}
+["timeChips","weatherChips","energyChips","moodChips"].forEach(pickChips);
+
+const budgetEl = document.getElementById("budget");
+const durEl = document.getElementById("duration");
+budgetEl.addEventListener("input", ()=> document.getElementById("budgetVal").textContent = budgetEl.value + " 元");
+durEl.addEventListener("input", ()=> document.getElementById("durVal").textContent = durEl.value + " 分钟");
+
+function ctx(){
+  const val = id => document.getElementById(id).querySelector(".chip.on").dataset.v;
+  return {
+    time: val("timeChips"),
+    weather: val("weatherChips"),
+    budget: +budgetEl.value,
+    minutes: +durEl.value,
+    energy: +val("energyChips"),
+    mood: val("moodChips")
+  };
+}
+
+/* ============ 抽签逻辑 ============ */
+let currentTask = null;
+
+function eligible(c, excludeDone){
+  const badWeather = (c.weather === "rain" || c.weather === "snow");
+  return POOL.filter(t => {
+    if (excludeDone && doneIds.includes(t.id)) return false;
+    if (t.budget > c.budget) return false;
+    if (t.energy > c.energy) return false;
+    if (t.outdoor && t.min > c.minutes) return false;
+    if (t.times && !t.times.includes(c.time)) return false;
+    if (t.weatherNeed && t.weatherNeed !== c.weather) return false;
+    if (t.outdoor && badWeather && !t.rainOk) return false;
+    return true;
+  });
+}
+
+async function draw(){
+  const c = ctx();
+  let pool = eligible(c, true);
+  let reshuffled = false;
+  if (pool.length === 0){
+    pool = eligible(c, false);
+    reshuffled = true;
+    if (pool.length > 0){
+      doneIds = [];
+      await saveLocalState();
+    }
+  }
+  if (pool.length === 0) return null;
+
+  const weighted = [];
+  pool.forEach(t => {
+    const w = t.mood.includes(c.mood) ? 3 : 1;
+    for (let i=0;i<w;i++) weighted.push(t);
+  });
+  const task = weighted[Math.floor(Math.random()*weighted.length)];
+
+  const n = c.energy >= 3 ? 7 : c.energy === 2 ? 5 : 3;
+  const fill = s => s.replaceAll("{n}", n).replaceAll("{budget}", Math.max(c.budget,10)).replaceAll("{min}", c.minutes);
+  return { ...task, desc: fill(task.d), stepList: task.steps.map(fill), reshuffled };
+}
+
+/* ============ 渲染：签文 ============ */
+const drawBtn = document.getElementById("drawBtn");
+const tube = document.getElementById("tube");
+const result = document.getElementById("result");
+const emptyHint = document.getElementById("emptyHint");
+
+function show(task){
+  if (!task){
+    result.style.display = "none";
+    emptyHint.style.display = "block";
+    return;
+  }
+  emptyHint.style.display = "none";
+  currentTask = task;
+  document.getElementById("fLevel").textContent = LEVELS[Math.floor(Math.random()*LEVELS.length)];
+  document.getElementById("fTitle").textContent = task.t;
+  document.getElementById("fDesc").textContent = task.desc;
+  document.getElementById("fSteps").innerHTML = task.stepList.map(s=>`<li>${s}</li>`).join("");
+  const meta = [`预算约 ${task.budget} 元`, `需 ${task.min} 分钟以上`, task.outdoor ? "户外" : "室内为主"];
+  if (task.reshuffled) meta.push("🔄 签库已重新洗牌，故签可能重逢");
+  document.getElementById("fMeta").textContent = meta.join(" · ");
+  result.style.display = "block";
+  const card = result.querySelector(".fortune-card");
+  card.style.animation = "none"; void card.offsetWidth; card.style.animation = "";
+  playFortuneRevealSound();
+  result.scrollIntoView({behavior:"smooth", block:"center"});
+}
+
+async function doDraw(){
+  drawBtn.disabled = true;
+  result.style.display = "none";
+  emptyHint.style.display = "none";
+  tube.classList.add("shaking");
+  playShakeSound();
+  const [task] = await Promise.all([
+    draw(),
+    new Promise(r=>setTimeout(r, 900))
+  ]);
+  tube.classList.remove("shaking");
+  drawBtn.disabled = false;
+  show(task);
+}
+
+drawBtn.addEventListener("click", doDraw);
+document.getElementById("redrawBtn").addEventListener("click", doDraw);
+
+/* ============ 完成弹窗 ============ */
+const modalMask = document.getElementById("modalMask");
+const photoInput = document.getElementById("photoInput");
+const photoPreview = document.getElementById("photoPreview");
+let pickedPhotos = [];  // base64 数组
+
+document.getElementById("doneBtn").addEventListener("click", ()=>{
+  if (!currentTask) return;
+  document.getElementById("modalTaskName").textContent = "「" + currentTask.t + "」";
+  document.getElementById("noteInput").value = "";
+  document.getElementById("locInput").value = guessedLoc;
+  pickedPhotos = [];
+  renderPreview();
+  modalMask.classList.add("open");
+});
+document.getElementById("modalCancel").addEventListener("click", ()=> modalMask.classList.remove("open"));
+modalMask.addEventListener("click", e=>{ if (e.target === modalMask) modalMask.classList.remove("open"); });
+
+document.getElementById("photoPickBtn").addEventListener("click", ()=> photoInput.click());
+photoInput.addEventListener("change", async ()=>{
+  for (const f of photoInput.files){
+    try{ pickedPhotos.push(await compress(f)); }catch{}
+  }
+  photoInput.value = "";
+  renderPreview();
+});
+
+function compress(file){
+  return new Promise((res, rej)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const s = Math.min(1, 1280 / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * s);
+      c.height = Math.round(img.height * s);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(img.src);
+      res(c.toDataURL("image/jpeg", 0.76));
+    };
+    img.onerror = rej;
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+function renderPreview(){
+  photoPreview.innerHTML = pickedPhotos.map((p,i)=>`
+    <div class="ph"><img src="${p}"><span class="del" data-i="${i}">×</span></div>`).join("");
+}
+photoPreview.addEventListener("click", e=>{
+  const d = e.target.closest(".del");
+  if (d){ pickedPhotos.splice(+d.dataset.i, 1); renderPreview(); }
+});
+
+document.getElementById("modalSave").addEventListener("click", async ()=>{
+  const saveBtn = document.getElementById("modalSave");
+  saveBtn.disabled = true;
+  saveBtn.textContent = "存档中……";
+  try{
+    const note = document.getElementById("noteInput").value.trim();
+    const location = document.getElementById("locInput").value.trim();
+    records.unshift({
+      id: (crypto.randomUUID ? crypto.randomUUID() : "local_" + Date.now()),
+      title: currentTask.t,
+      note,
+      location,
+      photos: [...pickedPhotos],
+      ts: Date.now()
+    });
+    if (!doneIds.includes(currentTask.id)) doneIds.push(currentTask.id);
+    await saveLocalState();
+
+    modalMask.classList.remove("open");
+    result.style.display = "none";
+    currentTask = null;
+    playStampSound();
+    renderHist();
+    renderMemory();
+  }catch(err){
+    alert("保存失败：" + err.message + "。请确认浏览器允许本地存储，并尝试减少照片数量。");
+  }finally{
+    saveBtn.disabled = false;
+    saveBtn.textContent = "存入手账 ✓";
+  }
+});
+
+/* ============ 手账时间轴 ============ */
+function fmtTime(ts){
+  const d = new Date(ts);
+  const p = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function esc(s){ return String(s||"").replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+
+function renderHist(){
+  const box = document.getElementById("historyList");
+  if (!records.length){
+    box.innerHTML = '<div class="hist-empty">还没有探索记录，抽第一签吧</div>';
+    return;
+  }
+  const sorted = [...records].sort((a,b)=>b.ts-a.ts);
+  box.innerHTML = '<div class="timeline">' + sorted.map(h=>`
+    <div class="tl-item">
+      <div class="tl-time">${fmtTime(h.ts)}</div>
+      <div class="tl-title">${esc(h.title)}</div>
+      ${h.location ? `<div class="tl-loc">📍 ${esc(h.location)}</div>` : ""}
+      ${h.note ? `<div class="tl-note">${esc(h.note)}</div>` : ""}
+      ${(h.photos && h.photos.length) ? `<div class="tl-photos">${h.photos.map(u=>`<img src="${esc(u)}" loading="lazy">`).join("")}</div>` : ""}
+    </div>`).join("") + "</div>";
+}
+
+/* ============ 探险回忆（随机） ============ */
+function renderMemory(){
+  const card = document.getElementById("memoryCard");
+  const inner = document.getElementById("memInner");
+  const pool = records.filter(r=>r.note || (r.photos && r.photos.length));
+  if (!pool.length){ card.style.display = "none"; return; }
+  const m = pool[Math.floor(Math.random()*pool.length)];
+  inner.innerHTML = `
+    ${(m.photos && m.photos.length) ? `<img src="${esc(m.photos[0])}">` : ""}
+    <div class="mem-text">
+      <div class="mem-date">${fmtTime(m.ts)}${m.location ? " · " + esc(m.location) : ""}</div>
+      <div class="mem-note">${esc(m.note) || "（这次只留下了照片）"}</div>
+      <div class="mem-title">—— ${esc(m.title)}</div>
+    </div>`;
+}
+document.getElementById("memRefresh").addEventListener("click", renderMemory);
+
+/* ============ 灯箱 ============ */
+const lightbox = document.getElementById("lightbox");
+document.addEventListener("click", e=>{
+  const img = e.target.closest(".tl-photos img, .mem-inner img");
+  if (img){
+    document.getElementById("lbImg").src = img.src;
+    lightbox.classList.add("open");
+  }
+});
+lightbox.addEventListener("click", ()=> lightbox.classList.remove("open"));
+
+/* ============ 清空 ============ */
+document.getElementById("clearHist").addEventListener("click", async ()=>{
+  if (!confirm("确定清空这台设备上的所有探索记录和照片？签库也会一并重置，此操作无法撤销。")) return;
+  records = [];
+  doneIds = [];
+  localStorage.removeItem(KEY_HIST);
+  localStorage.removeItem(KEY_DONE);
+  await saveLocalState();
+  renderHist();
+  renderMemory();
+});
+
+/* ============ PWA 安装与离线缓存 ============ */
+let installPrompt = null;
+const installBtn = document.getElementById("installBtn");
+window.addEventListener("beforeinstallprompt", event=>{
+  event.preventDefault();
+  installPrompt = event;
+  installBtn.hidden = false;
+});
+installBtn.addEventListener("click", async ()=>{
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  await installPrompt.userChoice;
+  installPrompt = null;
+  installBtn.hidden = true;
+});
+window.addEventListener("appinstalled", ()=>{
+  installPrompt = null;
+  installBtn.hidden = true;
+});
+
+if ("serviceWorker" in navigator){
+  window.addEventListener("load", ()=>{
+    navigator.serviceWorker.register("./service-worker.js").catch(err=>console.warn("离线缓存注册失败", err));
+  });
+}
+
+boot();
+</script>
+</body>
+</html>
