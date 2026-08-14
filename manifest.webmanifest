@@ -1,6 +1,7 @@
 {
   "name": "生活探索抽签机",
   "short_name": "探索抽签机",
+  "id": "./",
   "description": "把今天的状态交给签筒，换一个马上能做的小冒险。",
   "lang": "zh-CN",
   "start_url": "./",
