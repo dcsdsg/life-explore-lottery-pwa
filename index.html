@@ -64,6 +64,7 @@
   }
   #netBadge.off { display: block; }
   #netBadge.local { display: block; }
+  @media (display-mode: standalone) { #installBtn { display: none; } }
 
   .panel {
     background: #fff; border: 1px solid var(--border); border-radius: 14px;
@@ -226,7 +227,7 @@
 <div class="wrap">
   <header>
     <div class="audio-bar">
-      <button id="installBtn" class="audio-btn" title="安装到主屏幕" hidden>📲 安装</button>
+      <button id="installBtn" class="audio-btn" title="安装到主屏幕">📲 安装</button>
       <button id="soundToggle" class="audio-btn" title="开关动作音效">🔊 音效开</button>
       <button id="bgmToggle" class="audio-btn" title="开关背景音乐">🎵 音乐关</button>
     </div>
@@ -1132,17 +1133,30 @@ document.getElementById("clearHist").addEventListener("click", async ()=>{
 /* ============ PWA 安装与离线缓存 ============ */
 let installPrompt = null;
 const installBtn = document.getElementById("installBtn");
+const runningStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+installBtn.hidden = runningStandalone;
 window.addEventListener("beforeinstallprompt", event=>{
   event.preventDefault();
   installPrompt = event;
   installBtn.hidden = false;
 });
 installBtn.addEventListener("click", async ()=>{
-  if (!installPrompt) return;
-  installPrompt.prompt();
-  await installPrompt.userChoice;
-  installPrompt = null;
-  installBtn.hidden = true;
+  if (installPrompt){
+    installPrompt.prompt();
+    const choice = await installPrompt.userChoice;
+    installPrompt = null;
+    if (choice.outcome === "accepted") installBtn.hidden = true;
+    return;
+  }
+
+  const ua = navigator.userAgent;
+  if (/iPhone|iPad|iPod/i.test(ua)){
+    alert("请点浏览器底部或顶部的“分享”按钮，再选择“添加到主屏幕”，并打开“作为 Web App 打开”。");
+  } else if (/Android/i.test(ua)){
+    alert("请点浏览器右上角菜单 ⋮，选择“安装应用”或“添加到主屏幕”。");
+  } else {
+    alert("请点浏览器地址栏右侧的安装图标，或打开浏览器菜单并选择“安装此网站为应用”。");
+  }
 });
 window.addEventListener("appinstalled", ()=>{
   installPrompt = null;
