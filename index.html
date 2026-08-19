@@ -226,8 +226,9 @@
   .tl-photos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
   .tl-photos img { width: 84px; height: 84px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); cursor: zoom-in; }
   .hist-empty { text-align: center; color: var(--ink-light); font-size: 13px; padding: 16px 0; }
-  #clearHist { font-size: 12px; float: right; background: none; border: none; color: var(--ink-light); cursor: pointer; }
-  #clearHist:hover { color: var(--red); }
+  .hist-actions { float: right; display: inline-flex; gap: 10px; }
+  .hist-actions button { font-size: 12px; background: none; border: none; color: var(--ink-light); cursor: pointer; font-family: inherit; }
+  .hist-actions button:hover { color: var(--red); }
 
   /* 灯箱 */
   #lightbox {
@@ -313,7 +314,7 @@
 
   <div id="result">
     <div class="fortune-card">
-      <div class="fortune-level" id="fLevel">上上签</div>
+      <div class="fortune-level" id="fLevel">探索气质</div>
       <div class="fortune-title" id="fTitle"></div>
       <div class="fortune-desc" id="fDesc"></div>
       <ul class="steps" id="fSteps"></ul>
@@ -333,7 +334,8 @@
   </div>
 
   <div class="panel" style="margin-top:18px;">
-    <h2>探索手账 <button id="clearHist">清空</button></h2>
+    <h2>探索手账 <span class="hist-actions"><button type="button" id="exportBackup">备份</button><button type="button" id="importBackup">恢复</button><button type="button" id="clearHist">清空</button></span></h2>
+    <input type="file" id="backupInput" accept=".json,application/json" hidden>
     <div id="historyList"><div class="hist-empty">加载中……</div></div>
   </div>
 
@@ -436,7 +438,6 @@ const POOL = [
   {id:"home_letter", t:"手写信签", d:"手写一封信给某个人——寄出去，或者只是收好留给自己。", steps:["选定收信人：朋友、家人、或未来的自己","用纸笔认真写，不敷衍","拍照留档，或真的寄出去","记录：写信时你想到了什么"], budget:5, energy:1, min:45, outdoor:false, rainOk:true, mood:["heal","quiet"]}
 ];
 
-const LEVELS = ["上上签","上吉","中吉","小吉","末吉 · 但行动即转运"];
 const KEY_HIST = "leq_history_v2";
 const KEY_DONE = "leq_done_v2";
 
@@ -492,10 +493,86 @@ async function saveLocalState(){
   }
 }
 
+const BACKUP_APP = "life-explore-lottery-pwa";
+const BACKUP_VERSION = 1;
+
+function buildBackup(){
+  return {
+    app: BACKUP_APP,
+    version: BACKUP_VERSION,
+    exportedAt: new Date().toISOString(),
+    records,
+    doneIds
+  };
+}
+
+function validateBackup(raw){
+  if (!raw || raw.app !== BACKUP_APP || raw.version !== BACKUP_VERSION){
+    throw new Error("这不是生活探索抽签机生成的有效备份文件");
+  }
+  if (!Array.isArray(raw.records) || !Array.isArray(raw.doneIds)){
+    throw new Error("备份缺少手账或签库数据");
+  }
+
+  const restoredRecords = raw.records.map((item, index)=>{
+    if (!item || typeof item !== "object" || typeof item.title !== "string" || !Number.isFinite(item.ts)){
+      throw new Error(`第 ${index + 1} 条手账格式不正确`);
+    }
+    const photos = Array.isArray(item.photos)
+      ? item.photos.filter(photo=>typeof photo === "string" && /^data:image\/(?:jpeg|jpg|png|webp);base64,/i.test(photo)).slice(0, 9)
+      : [];
+    return {
+      id: typeof item.id === "string" ? item.id.slice(0, 100) : "restored_" + item.ts + "_" + index,
+      title: item.title.slice(0, 100),
+      note: String(item.note || "").slice(0, 2000),
+      location: String(item.location || "").slice(0, 100),
+      photos,
+      ts: item.ts
+    };
+  });
+
+  const validTaskIds = new Set(POOL.map(task=>task.id));
+  const restoredDoneIds = [...new Set(raw.doneIds.filter(id=>typeof id === "string" && validTaskIds.has(id)))];
+  return {records: restoredRecords, doneIds: restoredDoneIds};
+}
+
+function downloadBackup(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+async function exportBackup(){
+  const data = JSON.stringify(buildBackup());
+  const blob = new Blob([data], {type: "application/json"});
+  const date = new Date();
+  const pad = value=>String(value).padStart(2, "0");
+  const filename = `生活探索抽签机备份_${date.getFullYear()}${pad(date.getMonth()+1)}${pad(date.getDate())}.json`;
+
+  try{
+    const file = new File([blob], filename, {type: "application/json"});
+    if (navigator.share && navigator.canShare && navigator.canShare({files: [file]})){
+      await navigator.share({title: "生活探索抽签机备份", files: [file]});
+      return;
+    }
+  }catch(err){
+    if (err && err.name === "AbortError") return;
+  }
+  downloadBackup(blob, filename);
+}
+
 async function boot(){
   const state = await readLocalState();
   records = Array.isArray(state.records) ? state.records : [];
   doneIds = Array.isArray(state.doneIds) ? state.doneIds : [];
+  if (navigator.storage && navigator.storage.persist){
+    navigator.storage.persist().catch(()=>{});
+  }
   renderHist();
   renderMemory();
 }
@@ -984,6 +1061,19 @@ const tube = document.getElementById("tube");
 const result = document.getElementById("result");
 const emptyHint = document.getElementById("emptyHint");
 
+function explorationLabel(task){
+  if (task.weatherNeed === "rain") return "雨日限定";
+  if (!task.outdoor) return "室内探索";
+  if (task.times && task.times.length === 1 && task.times[0] === "morning") return "晨间出发";
+  if (task.times && task.times.length === 1 && task.times[0] === "night") return "夜行探索";
+  return {
+    quiet: "静心观察",
+    lively: "人间烟火",
+    heal: "温柔充电",
+    fresh: "新鲜体验"
+  }[ctx().mood] || "城市漫游";
+}
+
 function show(task){
   if (!task){
     result.style.display = "none";
@@ -992,7 +1082,7 @@ function show(task){
   }
   emptyHint.style.display = "none";
   currentTask = task;
-  document.getElementById("fLevel").textContent = LEVELS[Math.floor(Math.random()*LEVELS.length)];
+  document.getElementById("fLevel").textContent = explorationLabel(task);
   document.getElementById("fTitle").textContent = task.t;
   document.getElementById("fDesc").textContent = task.desc;
   document.getElementById("fSteps").innerHTML = task.stepList.map(s=>`<li>${s}</li>`).join("");
@@ -1161,6 +1251,35 @@ document.addEventListener("click", e=>{
   }
 });
 lightbox.addEventListener("click", ()=> lightbox.classList.remove("open"));
+
+/* ============ 备份与恢复 ============ */
+const backupInput = document.getElementById("backupInput");
+document.getElementById("exportBackup").addEventListener("click", ()=>{
+  exportBackup().catch(err=>alert("备份失败：" + err.message));
+});
+document.getElementById("importBackup").addEventListener("click", ()=> backupInput.click());
+backupInput.addEventListener("change", async ()=>{
+  const file = backupInput.files && backupInput.files[0];
+  if (!file) return;
+  try{
+    if (file.size > 100 * 1024 * 1024) throw new Error("备份文件超过 100 MB，无法在手机上安全恢复");
+    const restored = validateBackup(JSON.parse(await file.text()));
+    const ok = confirm(`备份中有 ${restored.records.length} 条手账。恢复会覆盖这台设备上的现有记录，是否继续？`);
+    if (!ok) return;
+    records = restored.records;
+    doneIds = restored.doneIds;
+    await saveLocalState();
+    currentTask = null;
+    result.style.display = "none";
+    renderHist();
+    renderMemory();
+    alert(`恢复完成：${records.length} 条手账，${doneIds.length} 个已完成任务。`);
+  }catch(err){
+    alert("恢复失败：" + err.message);
+  }finally{
+    backupInput.value = "";
+  }
+});
 
 /* ============ 清空 ============ */
 document.getElementById("clearHist").addEventListener("click", async ()=>{
