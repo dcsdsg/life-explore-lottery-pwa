@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+ <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+ <meta name="theme-color" content="#203b36">
+<meta name="description" content="带着问题探索北京、苏州与秦皇岛：有出处的城市任务、地图与本地手记。">
+ <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="城市探索">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+ <title>城市探索任务表 · 北京 / 苏州 / 秦皇岛</title>
+ <link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icon-180.png">
+ <link rel="stylesheet" href="./vendor/leaflet.css">
+<link rel="stylesheet" href="./styles.css">
+ <script defer src="./vendor/leaflet.js">
+</script>
+<script defer src="./vendor/coordtransform.js">
+</script>
+ <script defer src="./beijing-culture.js">
+</script>
+<script defer src="./beijing-outskirts.js">
+</script>
+<script defer src="./suzhou-quests.js">
+</script>
+<script defer src="./qinhuangdao-quests.js">
+</script>
+<script defer src="./quest-data.js">
+</script>
+<script defer src="./app.js">
+</script>
+</head>
+<body>
+ <header class="topbar">
+<a class="brand" href="./">
+<img src="./icon.svg" width="34" height="34" alt="">
+<span>城市探索任务表<small>CITY FIELD NOTES</small>
+</span>
+</a>
+<div class="header-tools">
+<span id="connection" class="network">本地记录</span>
+<button id="install" class="quiet">安装 / 使用说明</button>
+</div>
+</header>
+ <main>
+  <section class="hero">
+   <div>
+<p id="city-kicker" class="eyebrow">城市探索档案</p>
+<h1>带着一个问题，<br>重新走进<span id="city-name">北京</span>。</h1>
+<p class="hero-copy">不只是到此一游。接取一条线索，读一段来路，<br class="desktop-only">再把你的发现带回来。</p>
+<div class="hero-actions">
+<button id="random" class="primary">✧ 领一份今日悬赏</button>
+<a href="#filters" class="hero-link">自己挑一条线索 ↓</a>
+</div>
+<p id="origin" class="origin">
+</p>
+</div>
+   <div class="hero-art" aria-hidden="true">
+<span class="chapter-no">01</span>
+<svg viewBox="0 0 400 170">
+<path d="M5 155H395M42 155V90H92V155M32 90H102L85 76H50ZM143 155V65H260V155M127 65H277L256 45H148ZM159 45V34H244V45M178 34V18H225V34M185 155V117H217V155M307 155V104H352V155M296 104H363L347 88H314Z" fill="none" stroke="currentColor" stroke-width="3"/>
+<path d="M18 58H52M35 40V75M315 27H337M326 16V38" stroke="currentColor" stroke-width="2"/>
+</svg>
+<p>城的细节，值得慢慢解锁</p>
+</div>
+  </section>
+  <div class="chapter-strip">
+<label class="city-picker">切换城市 <select id="city" aria-label="切换城市">
+<option value="beijing">北京 · 30条详篇</option>
+<option value="suzhou">苏州 · 16条详篇</option>
+<option value="qinhuangdao">秦皇岛 · 6条简篇</option>
+</select>
+</label>
+<span id="city-intro">
+</span>
+<span id="progress-summary">载入任务中…</span>
+</div>
+  <div class="navrow">
+<nav aria-label="任务视图">
+<button data-view="board" aria-pressed="true">悬赏板</button>
+<button data-view="map" aria-pressed="false">探索地图</button>
+<button data-view="journal" aria-pressed="false">我的任务</button>
+<button data-view="sources" aria-pressed="false">资料案卷</button>
+</nav>
+<button id="data-tools" class="quiet">备份与恢复</button>
+</div>
+  <p id="storage-warning" class="warning" hidden>
+</p>
+  <section id="filters" class="filter-panel" aria-label="筛选任务">
+   <label class="search-label">
+<span>寻找线索</span>
+<input id="search" type="search" placeholder="地点、作品、主题…" autocomplete="off">
+</label>
+   <label>
+<span>探索主题</span>
+<select id="theme">
+<option value="all">全部主题</option>
+</select>
+</label>
+   <label>
+<span>区域</span>
+<select id="region">
+<option value="all">全城</option>
+</select>
+</label>
+   <label>
+<span>探索星级</span>
+<select id="stars">
+<option value="all">全部星级</option>
+<option value="3">★★★ 短途线索</option>
+<option value="4">★★★★ 半日专题</option>
+<option value="5">★★★★★ 专程探索</option>
+</select>
+</label>
+   <label>
+<span>任务状态</span>
+<select id="status">
+<option value="all">所有状态</option>
+<option value="new">尚未接取</option>
+<option value="active">进行中</option>
+<option value="done">已完成</option>
+<option value="skipped">暂缓</option>
+</select>
+</label>
+   <details class="departure">
+<summary>安排这次出发 <span>天气、时间、预算与精力</span>
+</summary>
+<div class="departure-grid">
+    <label>
+<span>出行日期</span>
+<input type="date" id="date" required>
+</label>
+    <label>
+<span id="duration-label">空闲时间（含往返）</span>
+<select id="duration">
+<option value="90">1.5小时</option>
+<option value="180">3小时</option>
+<option value="300">5小时</option>
+<option value="480">8小时</option>
+<option value="720" selected>12小时</option>
+</select>
+</label>
+    <label>
+<span>门票 / 市内交通预留</span>
+<input id="budget" type="number" min="0" max="10000" value="150" step="10">
+</label>
+    <label>
+<span>今天的精力</span>
+<select id="energy">
+<option value="1">低 · 轻松一点</option>
+<option value="2">一般 · 可以走走</option>
+<option value="3" selected>充足 · 可去远郊</option>
+</select>
+</label>
+    <label>
+<span>你查到的天气</span>
+<select id="weather">
+<option value="any">未设置</option>
+<option value="fine">晴 / 阴</option>
+<option value="rain">轻雨</option>
+<option value="severe">大风 / 暴雨 / 山区预警</option>
+</select>
+</label>
+    <label>
+<span>出发时段</span>
+<select id="daypart">
+<option value="any">未设置</option>
+<option value="morning">上午</option>
+<option value="afternoon">下午</option>
+<option value="evening">傍晚</option>
+</select>
+</label>
+   </div>
+<label class="check-line">
+<input id="eligible-only" type="checkbox">只显示符合这些条件的任务</label>
+<p id="departure-note" class="micro">
+</p>
+</details>
+  </section>
+  <div id="workspace" class="workspace">
+   <section class="board-pane">
+<div class="section-top">
+<div>
+<p class="eyebrow">THE QUEST BOARD</p>
+<h2 id="board-title">北京悬赏板</h2>
+</div>
+<span id="result-count" class="muted">
+</span>
+</div>
+<div id="quest-list" class="quest-grid">
+</div>
+<div id="empty" class="empty" hidden>
+<h3>这次没有合适的任务</h3>
+<p>试着放宽主题或条件；远郊任务需要留出完整的一天。</p>
+<button id="reset-filters">重置筛选</button>
+</div>
+</section>
+   <aside class="map-pane">
+<div class="section-top">
+<div>
+<p id="map-kicker" class="eyebrow">FIELD MAP</p>
+<h2>线索在城里</h2>
+</div>
+<button id="fit-map" class="quiet">看全部</button>
+</div>
+<div id="map" aria-label="城市探索任务参考点地图">
+</div>
+<div class="map-toolbar">
+<button id="load-map">加载联网底图</button>
+<button id="home-map" class="quiet">回到本城</button>
+</div>
+<p id="map-message" class="micro">参考点已显示，底图尚未联网加载。点击圆点查看任务；点位不是准确入口导航。</p>
+<p class="micro">底图：<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a> · <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener noreferrer">报告地图问题</a>
+<br>地图联网时会向地图服务发送当前视野的瓦片请求，不发送你的手记或进度。</p>
+<div class="map-legend">
+<span>
+<i class="dot three">
+</i>三星</span>
+<span>
+<i class="dot four">
+</i>四星</span>
+<span>
+<i class="dot five">
+</i>五星</span>
+<span>
+<i class="dot done">
+</i>已完成</span>
+</div>
+</aside>
+  </div>
+  <section id="source-pane" hidden>
+<div class="section-top">
+<div>
+<p class="eyebrow">RESEARCH ARCHIVE</p>
+<h2>先找地方的来路，再决定怎么走</h2>
+</div>
+</div>
+<p>地方志和政府资料提供线索，文物研究帮助核对，作品让问题变得具体。每张任务卡都能展开自己的资料出处。</p>
+<div id="research-portals" class="portal-grid">
+</div>
+<div class="principles">
+<h3>这份地图的阅读约定</h3>
+<p>三星是短途观察，四星是半日专题，五星是预约或远郊的专程探索。是本任务表的编辑分级，不是官方景区A等级，也不是地点价值排名。</p>
+<p>文学意象、历史小说、民间传说与可核对的史实分开标注。资料整理日期为2026-10-01；场馆公告会变化，旧网页的时间与票价只作参考。</p>
+<p>数字方志馆和原书PDF是查资料的入口。标为“索引”的资料未宣称全文通读；没有证据支撑的精确年代、展品在展状态和演出安排，不作保证。</p>
+</div>
+</section>
+  <footer>
+<span>城市探索任务表 · 三城版 v1.1</span>
+<span>任务与手记可离线 · 地图与外链需联网 · 无账号、无会员</span>
+<a href="./维护说明.md" target="_blank">维护说明</a>
+</footer>
+ </main>
+ <dialog id="quest-dialog" class="quest-dialog">
+<div class="dialog-top">
+<span id="dialog-kicker">
+</span>
+<button id="close-quest" class="close" aria-label="关闭任务详情">×</button>
+</div>
+<div id="quest-detail">
+</div>
+</dialog>
+ <dialog id="tools-dialog" class="tools-dialog">
+<div class="dialog-top">
+<h2>保管你的探索档案</h2>
+<button data-close="tools-dialog" class="close" aria-label="关闭备份窗口">×</button>
+</div>
+<p>记录只保存在当前浏览器或已安装应用的本地空间，不会自动同步。清理网站数据、卸载或换地址都可能丢失记录。</p>
+<div class="tool-actions">
+<button id="export" class="primary">导出备份</button>
+<label class="file-button">恢复备份<input id="import" type="file" accept=".json,application/json" hidden>
+</label>
+<button id="clear" class="danger">清空本页记录</button>
+</div>
+<p class="micro">恢复前会校验格式并要求确认，完整替换本页任务进度与手记；不影响原抽签机。本页面备份不能导入旧抽签机。</p>
+</dialog>
+ <dialog id="install-dialog" class="tools-dialog">
+<div class="dialog-top">
+<h2>把任务表带在身边</h2>
+<button data-close="install-dialog" class="close" aria-label="关闭安装说明">×</button>
+</div>
+<p id="install-state">
+</p>
+<button id="native-install" class="primary" hidden>安装城市探索任务表</button>
+<h3>iPhone / iPad</h3>
+<p>在Safari中打开正式HTTPS网址 → 分享 → 添加到主屏幕。若从聊天内置浏览器打开，先选“在Safari中打开”。</p>
+<h3>Android / 电脑</h3>
+<p>浏览器菜单中寻找“安装应用”或“添加到主屏幕”。首次联网打开后，任务正文与本地记录可以离线使用。</p>
+<p class="micro">电脑预览地址不是手机网址。正式入口在原GitHub Pages网址下的city-quests独立页面；联网地图和资料外链不在离线包里。</p>
+</dialog>
+ <div id="toast" role="status" aria-live="polite" hidden>
+</div>
+ <noscript>
+<p class="warning">任务表需要开启JavaScript；原始任务可查看同目录的资料文件。</p>
+</noscript>
+</body>
+</html>

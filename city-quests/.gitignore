@@ -1,0 +1,17 @@
+# Generated packages, preview logs and acceptance screenshots stay local.
+release/
+logs/
+验收-*.png
+*.log
+
+# Local dependencies, credentials and device backups must not be published.
+node_modules/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+城市探索档案-*.json
+backup*.json
+Thumbs.db
+.DS_Store
