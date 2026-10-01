@@ -85,6 +85,27 @@ function visibleQuests(){
  });
 }
 const statusLabel={new:'待接取',active:'进行中',done:'已完成',skipped:'暂缓'};
+function readingLinkHtml(link,compact=false){
+ const url=safeUrl(link.url);if(url==='#')return '';
+ const label=compact&&link.kind==='info'?'读这处地点的资料':link.label;
+ return `<a class="reading-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer"><span>${escapeHtml(label)} ↗</span>${compact?'':`<small>${escapeHtml(READING_KIND_LABELS[link.kind])} · ${escapeHtml(link.source)}</small>`}</a>`;
+}
+function readingShortcut(q){
+ const resource=readingResourcesFor(q,0);
+ return `<div class="reading-shortcut"><span>先读再去</span>${resource.inline?`<button data-reading-jump="0">页内读${escapeHtml(resource.inline.title)} ↓</button>`:readingLinkHtml(resource.links[0],true)}${resource.inline?'':'<button class="quiet" data-reading-jump="0">查看阅读材料 ↓</button>'}</div>`;
+}
+function renderReading(q,index){
+ const item=q.culture.reading[index],resource=readingResourcesFor(q,index),text=resource.inline;
+ return `<article class="reading" id="reading-${index}" tabindex="-1">
+<h4>${escapeHtml(item.title)}</h4><span class="tag">${escapeHtml(item.relation)}</span>
+<p>${escapeHtml(item.note)}</p>
+${resource.guide?`<p class="reading-guide"><strong>读的时候留意：</strong>${escapeHtml(resource.guide)}</p>`:''}
+<div class="reading-actions">${resource.links.map(link=>readingLinkHtml(link)).join('')}</div>
+${resource.links.filter(link=>link.note).map(link=>`<p class="micro">${escapeHtml(link.note)}</p>`).join('')}
+${resource.notice?`<p class="reading-notice">${escapeHtml(resource.notice)}</p>`:''}
+${text?`<details class="inline-reading"><summary>展开页内文字 · ${escapeHtml(text.extent)} · 可离线</summary><div class="inline-reading-body"><h5>${escapeHtml(text.title)}</h5><p class="micro">${escapeHtml(text.author)} · ${escapeHtml(text.extent)}</p><blockquote class="inline-text">${escapeHtml(text.text)}</blockquote><p class="micro">出处：${escapeHtml(text.source)} · <a href="${escapeHtml(safeUrl(text.url))}" target="_blank" rel="noopener noreferrer">核对原典 ↗</a></p></div></details>`:''}
+</article>`;
+}
 function render(){
  const all=visibleQuests(),local=cityQuests(),name=CITY_CONFIG[selectedCity].name;
  $('board-title').textContent=view==='journal'?name+' · 我的探索档案':name+'悬赏板';
@@ -123,17 +144,16 @@ function renderDetail(){
 <section class="detail-section">
 <h3>可选任务清单 <span class="step-counter" id="step-counter">${r.checks.filter(Boolean).length}/${q.steps.length}</span>
 </h3>
+${readingShortcut(q)}
 <div class="step-list">${q.steps.map((s,i)=>`<label class="step">
 <input type="checkbox" data-step="${i}" ${r.checks[i]?'checked':''}>
 <span>${escapeHtml(s)}</span>
 </label>`).join('')}</div>
 </section>
 <section class="detail-section">
-<h3>文化线索 · 去之前读一小段</h3>${c.reading.map(x=>`<div class="reading">
-<h4>${escapeHtml(x.title)}</h4>
-<span class="tag">${escapeHtml(x.relation)}</span>
-<p>${escapeHtml(x.note)}</p>
-</div>`).join('')}<p class="micro">作品是观察的入口，不要求读完，也不包含版权全文；下方资料可以核对作者、地点与历史关系。</p>
+<h3>文化线索 · 点开就能读</h3>
+<p class="micro">外站原文、导读与地点资料分别标明；外链需联网。带“页内文字”的古典原文及本页观察提示，首次缓存后可离线读。没有把仍受版权保护的作品全文复制进本页。</p>
+${c.reading.map((_,i)=>renderReading(q,i)).join('')}
 </section>
 <div class="detail-grid">
 <div class="info-box">
@@ -207,6 +227,8 @@ $('quest-detail').addEventListener('change',e=>{
 });
 $('quest-detail').addEventListener('input',e=>{if(e.target.id==='quest-note'){$('note-state').textContent=updateRecord(activeId,{note:e.target.value})?'已保存到本地 · 不上传':'未写入浏览器，请导出备份';}});
 $('quest-detail').addEventListener('click',e=>{
+ const jump=e.target.closest('[data-reading-jump]');
+ if(jump){const reading=$('reading-'+jump.dataset.readingJump);if(reading){const text=reading.querySelector('.inline-reading');if(text)text.open=true;reading.focus({preventScroll:true});reading.scrollIntoView({block:'start'});}return;}
  if(e.target.id==='accept-quest'){const saved=updateRecord(activeId,{status:'active',completedAt:null});syncProgress();toast(saved?'已接取，随时回来继续这份任务':'已在本次打开中接取；请导出备份保管');}
  if(e.target.id==='finish-quest')toggleComplete(activeId);
  if(e.target.id==='skip-quest'){const r=recordFor(activeId);if(r.status==='done'&&!confirm('暂缓会取消这条任务的已完成状态，清单与手记保留。继续吗？'))return;updateRecord(activeId,{status:r.status==='skipped'?'active':'skipped',completedAt:null});syncProgress();}

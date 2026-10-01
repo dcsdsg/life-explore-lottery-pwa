@@ -1,7 +1,7 @@
 'use strict';
 const PREFIX='city-quests:'+self.registration.scope+':';
-const CACHE=PREFIX+'v2';
-const FILES=['./','./index.html','./styles.css','./app.js','./beijing-culture.js','./beijing-outskirts.js','./suzhou-quests.js','./qinhuangdao-quests.js','./quest-data.js','./manifest.webmanifest','./icon.svg','./icon-180.png','./icon-192.png','./icon-512.png','./vendor/leaflet.js','./vendor/leaflet.css','./vendor/coordtransform.js'];
+const CACHE=PREFIX+'v3';
+const FILES=['./','./index.html','./styles.css','./app.js','./beijing-culture.js','./beijing-outskirts.js','./suzhou-quests.js','./qinhuangdao-quests.js','./quest-data.js','./reading-resources.js','./manifest.webmanifest','./icon.svg','./icon-180.png','./icon-192.png','./icon-512.png','./vendor/leaflet.js','./vendor/leaflet.css','./vendor/coordtransform.js'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith(PREFIX)&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
 self.addEventListener('fetch',e=>{
