@@ -2,7 +2,8 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),asse
 const root=path.resolve(__dirname,'..'),ctx=vm.createContext({});
 vm.runInContext(fs.readFileSync(path.join(root,'travel-data.js'),'utf8'),ctx);
 const cities=vm.runInContext('TRAVEL_CITIES',ctx),ids=new Set();
-assert.equal(cities.length,10);
+assert.equal(cities.length,16);
+for(const id of ['zhanjiang','foshan','guangzhou','wuhan','shenzhen','changsha'])assert(cities.some(c=>c.id===id),'缺新增城市：'+id);
 let places=0,inline=0;
 for(const c of cities){
  assert(!ids.has(c.id));ids.add(c.id);assert(c.intro&&c.compressed&&c.environment&&c.access&&c.lowEnergy);
@@ -17,4 +18,4 @@ const sw=fs.readFileSync(path.join(root,'service-worker.js'),'utf8');
 for(const asset of ['travel.html','travel.js','travel.css','travel-data.js','城市旅行维护说明.md'])assert(sw.includes('./'+asset)&&fs.existsSync(path.join(root,asset)),asset+'未进入离线包');
 assert(sw.includes('ignoreSearch:true'),'多页离线深链接必须匹配请求页面');
 const js=fs.readFileSync(path.join(root,'travel.js'),'utf8');assert(!js.includes('localStorage.clear('));assert(!js.includes('city-exploration-quests:state:v1'));
-console.log(`通过：10份城市总任务、${places}个稳定地点编号、30条可选认城线索、${inline}份离线古诗/节选、路线引用与来源完整、新旧记录隔离。`);
+console.log(`通过：${cities.length}份城市总任务、${places}个稳定地点编号、${cities.reduce((n,c)=>n+c.completion.length,0)}条可选认城线索、${inline}份离线古诗/节选、六座新增城市、路线引用与来源完整、新旧记录隔离。`);

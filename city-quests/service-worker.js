@@ -1,6 +1,6 @@
 'use strict';
 const PREFIX='city-quests:'+self.registration.scope+':';
-const CACHE=PREFIX+'v4';
+const CACHE=PREFIX+'v5';
 const FILES=['./','./index.html','./styles.css','./app.js','./beijing-culture.js','./beijing-outskirts.js','./suzhou-quests.js','./qinhuangdao-quests.js','./quest-data.js','./reading-resources.js','./travel.html','./travel-data.js','./travel.js','./travel.css','./城市旅行维护说明.md','./manifest.webmanifest','./icon.svg','./icon-180.png','./icon-192.png','./icon-512.png','./vendor/leaflet.js','./vendor/leaflet.css','./vendor/coordtransform.js'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith(PREFIX)&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
