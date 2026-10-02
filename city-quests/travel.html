@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+ <meta name="theme-color" content="#203b36">
+ <meta name="description" content="十座城市，十份旅行总任务：代表地点、认识城市的路线、文化阅读与本地完成记录。">
+ <meta name="apple-mobile-web-app-capable" content="yes">
+ <meta name="apple-mobile-web-app-title" content="城市探索">
+ <meta name="apple-mobile-web-app-status-bar-style" content="default">
+ <title>城市旅行任务表 · 十城第一辑</title>
+ <link rel="manifest" href="./manifest.webmanifest">
+ <link rel="icon" href="./icon.svg" type="image/svg+xml">
+ <link rel="apple-touch-icon" href="./icon-180.png">
+ <link rel="stylesheet" href="./styles.css">
+ <link rel="stylesheet" href="./travel.css">
+ <script defer src="./travel-data.js"></script>
+ <script defer src="./travel.js"></script>
+</head>
+<body>
+ <header class="topbar">
+  <a class="brand" href="./travel.html"><img src="./icon.svg" width="34" height="34" alt=""><span>城市旅行任务表<small>TEN CITY JOURNEYS / 第一辑</small></span></a>
+  <div class="header-tools"><a class="back-link" href="./">北京 / 苏州长期探索 ↗</a></div>
+ </header>
+ <main>
+  <section class="hero travel-hero">
+   <div><p class="eyebrow">把一座城，作为一份总任务</p><h1>不必集齐景点，<br>带回一座城的线索。</h1><p class="hero-copy">先看代表地点，再读它们为何相连。<br>十座城市，十条入门主线；留白给休息与自己的发现。</p><div class="hero-actions"><a class="trip-cta" href="#travel-board">选一座城，开始旅行 ↓</a><button id="travel-random" class="quiet">给我一座备选城市</button></div></div>
+   <div class="travel-stamp" aria-hidden="true"><span>01—10</span><p>一城 · 一份旅行档案</p><div>地点 / 来路 / 路线 / 手记</div></div>
+  </section>
+  <div class="chapter-strip"><span>北京、苏州继续保留原来的细分任务；秦皇岛原简篇也仍在。</span><span id="travel-progress">本地记录 · 无账号</span></div>
+  <p id="travel-storage-warning" class="warning" hidden></p>
+  <section class="travel-explainer"><p>这不是“去完才算去过”的清单。每城挑几个能相互解释的地点：一处入门、一段历史、一种日常。到访可勾选，认城线索可选做，整城完成由你自己决定。</p><p class="micro">编辑选集，不是客观旅游前十。预算是成人门票与当地交通的规划余量，不含跨城交通、住宿、餐饮；时间不是实时导航。资料整理于 <span id="travel-date"></span>，出发前仍须核官方预约、开放和天气。</p></section>
+  <div class="navrow"><h2 id="travel-board">十城旅行悬赏</h2><button id="travel-tools" class="quiet">我的备份 / 使用说明</button></div>
+  <section class="travel-filters" aria-label="筛选旅行城市">
+   <label><span>城市、地点或文化线索</span><input id="travel-search" type="search" placeholder="例如：泉州、石窟、运河"></label>
+   <label><span>地域</span><select id="travel-region"><option value="">全国</option><option>华东</option><option>华中</option><option>华南</option><option>西北</option><option>西南</option></select></label>
+   <label><span>完整游玩时间</span><select id="travel-days"><option value="3">约3天 · 主线</option><option value="2">仅2天 · 看取舍方案</option><option value="4">4天以上 · 可加支线</option></select></label>
+   <label><span>我的旅行</span><select id="travel-status"><option value="">全部</option><option value="new">未计划</option><option value="planned">已计划</option><option value="done">已完成</option></select></label>
+  </section>
+  <p id="travel-count" class="micro" aria-live="polite"></p>
+  <section id="travel-cards" class="travel-grid" aria-label="城市旅行任务"></section>
+  <section class="principles travel-boundary"><h2>怎么开始了解一座城市？</h2><p>出发前读一份官方历史或地方志资料 → 第一站建立时间与空间框架 → 两三处代表地点互相对照 → 留一段时间给普通生活 → 带回一个你自己的解释。没有必须全完成的门槛，也不把“冷门”当优越感。</p><p class="micro">路线与问题是本任务表的编辑建议；历史线索链接到政府、地方志、场馆或世界遗产资料。古典作品部分内置，可离线阅读；现代作品只提供合法公开的相关材料链接，不冒充全文。外部阅读、导航与最新公告需要联网。</p></section>
+  <footer><span>城市旅行第一辑 v1.0 · 私人记录只存在当前浏览器 / 手机</span><a href="./">回到长期探索任务表</a><a href="./城市旅行维护说明.md" target="_blank" rel="noopener noreferrer">维护说明</a></footer>
+ </main>
+ <dialog id="travel-dialog" class="quest-dialog" aria-labelledby="travel-title"><div class="dialog-top"><span id="travel-dialog-label">城市总任务</span><button id="travel-close" class="close" aria-label="关闭城市任务">×</button></div><div id="travel-detail"></div></dialog>
+ <dialog id="travel-tools-dialog" class="tools-dialog" aria-labelledby="travel-tools-title">
+  <div class="dialog-top"><span>只管理十城旅行的新记录</span><button id="travel-tools-close" class="close" aria-label="关闭备份说明">×</button></div>
+  <h2 id="travel-tools-title">旅行档案，保存在你的设备里</h2><p>无需会员、账号或服务器。计划、到访、线索勾选和文字手记存在当前浏览器 / 主屏幕应用的本地存储中，不会自动上传，不会多设备同步。</p><p class="warning">清理浏览器数据、换手机或卸载主屏幕应用可能丢失记录。出发前先导出，回来后再备份。不同浏览器或主屏幕环境可能不共享记录。</p>
+  <div class="tool-actions"><button id="travel-export" class="primary">导出十城旅行备份</button><label class="file-button">恢复旅行备份<input id="travel-import" type="file" accept="application/json,.json" hidden></label><button id="travel-clear" class="danger">清空十城旅行记录</button></div>
+  <p class="micro">此处备份只包含本页十城旅行。北京 / 苏州 / 秦皇岛细分探索和原抽签机有各自备份，请到原页面导出；这里的恢复与清空不会改动它们。</p>
+  <h3>安装与离线</h3><p>此页属于已有“城市探索”PWA。苹果设备用 Safari 打开探索首页，分享 → 添加到主屏幕；安卓用浏览器安装 / 添加到主屏幕。安装后从首页进入“十城旅行”。不需要另装一个应用。</p><p id="travel-offline-note" class="micro">联网打开一次并完成离线资源准备后，页面、路线、资料摘要与内置古诗可以离线使用。外部原文、导航和实时票务不能离线。</p><h3>如何维护</h3><p>每城是一个总任务，不是六张新悬赏。增加城市或地点时保留已有编号；路线、预算与预约线索要注明估算或核实日期。</p>
+ </dialog>
+ <div id="toast" role="status" hidden></div>
+</body>
+</html>
