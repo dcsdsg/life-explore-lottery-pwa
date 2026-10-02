@@ -100,7 +100,7 @@ const initialCity=new URL(location.href).searchParams.get('city');if(tripById.ha
 window.addEventListener('popstate',()=>{const id=new URL(location.href).searchParams.get('city');if(tripById.has(id))openTravel(id,false);else if(tripEl('travel-dialog').open)closeTravel();});
 async function checkTravelOffline(){
  try{
-  const scope=new URL('./',location.href).href,cacheName='city-quests:'+scope+':v5';
+  const scope=new URL('./',location.href).href,cacheName='city-quests:'+scope+':v6';
   if(!navigator.serviceWorker.controller||!(await caches.has(cacheName)))return;
   const cache=await caches.open(cacheName),files=['travel.html','travel.js','travel-data.js','travel.css'];
   if((await Promise.all(files.map(f=>cache.match(new URL(f,scope))))).every(Boolean))tripEl('travel-offline-note').textContent='离线资源已准备：页面、路线、摘要与内置古诗可离线重开。外部阅读、导航和当日公告仍需联网。';

@@ -8,7 +8,9 @@
 
 正式入口：[城市探索任务表](https://dcsdsg.github.io/life-explore-lottery-pwa/city-quests/)。发布由原仓库main分支的GitHub Pages构建完成，推送后需等构建成功。
 
-旅行入口：[城市旅行任务表](https://dcsdsg.github.io/life-explore-lottery-pwa/city-quests/travel.html)。可用 `travel.html?city=zhanjiang` 直开家乡湛江，`?city=wuhan` 直开武汉；共用原探索PWA安装，独立探索离线包v5支持两页与各自深链接。保留原存储键与v1备份格式，原十城备份继续可用。
+旅行入口：[城市旅行任务表](https://dcsdsg.github.io/life-explore-lottery-pwa/city-quests/travel.html)。可用 `travel.html?city=zhanjiang` 直开家乡湛江，`?city=wuhan` 直开武汉；共用原探索PWA安装，独立探索离线包v6支持各页面与深链接。保留原存储键与v1备份格式，原十城备份继续可用。
+
+新增[京西双寺一日行程](https://dcsdsg.github.io/life-explore-lottery-pwa/city-quests/temple-day.html)：2026-10-03从贸大出发，戒台寺与潭柘寺的路线、公交时刻冲突、预算、开放核实、文化观察和直接阅读入口。复用两个原任务及完成记录，不重复建任务；共72项阅读入口、30项专配。参见[双寺行程维护说明](./双寺行程维护说明.md)。
 
 本地打开：在此目录运行 `pwsh -File .\启动本地预览.ps1`，访问 http://127.0.0.1:8877/ 。
 

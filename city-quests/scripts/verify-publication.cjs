@@ -24,7 +24,7 @@ const server=http.createServer((req,res)=>{
   await city.evaluate(async()=>{await caches.open('unrelated-app-keep');await caches.open('life-explore-pwa-v4');});
   const old=await ctx.newPage();old.on('pageerror',e=>errors.push(e.message));await old.goto(base);
   const oldTitle=await old.title();assert(oldTitle.includes('生活探索'));await old.waitForFunction(async()=>!!(await navigator.serviceWorker.ready));await old.reload();await old.waitForFunction(()=>!!navigator.serviceWorker.controller);
-  const names=await old.evaluate(()=>caches.keys());assert(names.includes('unrelated-app-keep'));assert(!names.includes('life-explore-pwa-v4'));assert(names.includes('life-explore-pwa-v5'));assert(names.some(n=>n.startsWith('city-quests:')&&n.endsWith(':v5')));
+  const names=await old.evaluate(()=>caches.keys());assert(names.includes('unrelated-app-keep'));assert(!names.includes('life-explore-pwa-v4'));assert(names.includes('life-explore-pwa-v5'));assert(names.some(n=>n.startsWith('city-quests:')&&n.endsWith(':v6')));
   await city.locator('#city').selectOption('beijing');await city.locator('[data-open="bjc_literature"]').click();
   const direct=city.locator('.reading-shortcut .reading-link');assert.equal(await direct.getAttribute('href'),'https://www.chinawriter.com.cn/n1/2018/1025/c419384-30361893.html');assert.equal(await direct.getAttribute('target'),'_blank');
   const beforeReading=await city.evaluate(()=>JSON.stringify(recordFor(activeId)));

@@ -5,6 +5,29 @@ const readingLink=(label,kind,url,source,note='')=>({label,kind,url,source,note}
 const wikiReading=(label,page,note='')=>readingLink(label,'original','https://zh.wikisource.org/zh-hans/'+page,'维基文库',note);
 const READING_KIND_LABELS={original:'原文',excerpt:'原文节选',guide:'导读 · 非原文',info:'地点资料 · 非作品原文',book:'书籍介绍 · 非全文'};
 const READING_RESOURCES={
+ 'bjc_jietai:0':{
+  expectedTitle:'戒台寺古树养护公告与现场戒坛说明',
+  links:[readingLink('读古树复壮与养护资料','info','https://www.bjmtg.gov.cn/mtg11J008/ywdt/202503/13c1419f0437431387d05f574ea756ba.shtml','门头沟区文化和旅游局'),readingLink('读戒台寺背景与参观指南','info','https://www.bjmtg.gov.cn/bjmtg/c104897/202504/fdeac5d987f74895aac01a4c9071d21d.shtml','门头沟区政府')],
+  guide:'从“分级、复壮、日常养护”三个词读起。到现场选一棵实际可看的松，记录保护牌、支撑和围栏；戒坛与受戒、传戒相关，具体建筑年代在现场再核对。',
+  notice:'这里是公开工作资料和参观指南，不包含全部现场戒坛展签；修缮和开园须确认当天情况。'
+ },
+ 'bjc_tanzhe:0':{
+  expectedTitle:'门头沟区情沿革、寺院介绍与古树保护牌',
+  links:[readingLink('读潭柘寺建筑与参观资料','info','https://s.visitbeijing.com.cn/attraction/117841','北京旅游网'),readingLink('读门头沟历史沿革','info','https://www.beijing.gov.cn/renwen/bjgk/mtggk/','首都之窗')],
+  guide:'把寺院源流、现存殿堂和古树保护牌的年代画成三列。“先有潭柘寺，后有北京城”是地方记忆的说法，不能理解成北京此前没有聚落；古书中的龙潭故事也不能代替考古年代。',
+  notice:'参观页的票价、时段是参考，不保证当天接待；完整古树信息仍以现场保护牌为准。'
+ },
+ 'bjc_jietai:1':{
+  expectedTitle:'朱自清《潭柘寺戒坛寺》',
+  links:[wikiReading('直接读《潭柘寺戒坛寺》全文','潭柘寺戒壇寺')],
+  guide:'注意作者看松与寺院空间的方法，再写你今天的观察。文章作于1934年，旅行交通、僧人接待和建筑状态不是今天的指南。'
+ },
+ 'bjc_tanzhe:1':{
+  expectedTitle:'朱自清《潭柘寺戒坛寺》',
+  links:[wikiReading('直接读《潭柘寺戒坛寺》全文','潭柘寺戒壇寺'),readingLink('再读《帝京景物略》潭柘寺条','original','https://www.shidianguji.com/book/NA04568/chapter/1l3wrnvdmitkj','识典古籍')],
+  guide:'选屋顶、竹、树、泉声之一做古今对照。看不见就写无法核对；旧游记后门和古洞路线不能作为今日穿山、越界依据。古书的神异叙述按传说来读。',
+  notice:'两个入口提供对应文字，外站需联网；本页导读可离线，不自动下载作品全文。'
+ },
  'bjc_literature:0':{
   expectedTitle:'巴金《随想录》',
   links:[readingLink('读《小狗包弟》原文','original','https://www.chinawriter.com.cn/n1/2018/1025/c419384-30361893.html','中国作家网','《随想录》中的一篇；公开网页阅读，无需先找整本书。')],

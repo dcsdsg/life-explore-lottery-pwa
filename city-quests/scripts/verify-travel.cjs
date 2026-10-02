@@ -19,6 +19,8 @@ const server=http.createServer((req,res)=>{
   await p.goto(base+'city-quests/travel.html');assert.equal(await p.locator('.travel-card').count(),16);
   assert((await p.locator('#travel-progress').innerText()).includes('/ 16'));assert.equal(await p.locator('#travel-new-cities button').count(),6);
   await p.locator('#travel-new-cities [data-trip-open="zhanjiang"]').click();assert((await p.locator('#travel-title').innerText()).includes('湛江'));await p.locator('#travel-close').click();
+  // The native close event clears the deep link asynchronously; wait before testing a fresh board reload.
+  await p.waitForFunction(()=>!new URL(location.href).searchParams.has('city'));
   await p.waitForFunction(async()=>!!(await navigator.serviceWorker.ready));await p.reload();await p.waitForFunction(()=>!!navigator.serviceWorker.controller);
   await p.evaluate(()=>{localStorage.setItem('city-exploration-quests:state:v1','KEEP_EXPLORATION');localStorage.setItem('lifeExploreSentinel','KEEP_LOTTERY');});
   await p.locator('[data-trip-done="xian"]').click();assert.equal(await p.evaluate(()=>tripRecord('xian').status),'done');assert.equal(await p.evaluate(()=>travelCount(tripRecord('xian'))),0);

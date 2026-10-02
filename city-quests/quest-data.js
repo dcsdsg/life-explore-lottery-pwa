@@ -43,7 +43,7 @@ const THEME_LABELS={literature:'文学寻踪',city:'城与日常',architecture:'
 const QUESTS=[...BEIJING_CULTURE_TASKS,...BEIJING_OUTSKIRT_TASKS,...SUZHOU_QUESTS,...QINHUANGDAO_QUESTS].map(t=>{
  const m=QUEST_META[t.id]||t;if(!m.reference&&!m.bd)throw new Error('缺少任务地图信息：'+t.id);
  const xy=m.bd?coordtransform.gcj02towgs84(...coordtransform.bd09togcj02(...m.bd)):null;
- return {...t,...m,province:t.province||'北京',city:t.city||'beijing',hook:m.hook||t.d,latlng:xy?[xy[1],xy[0]]:m.reference,geoNote:m.geoNote||(m.bd?'官方旅游页参考点，BD-09经近似转换到WGS84；不是入口导航。':'依据地址整理的WGS84近似街区参考点，未逐一测绘；误差可能数百米或更大，不可用于入口导航，请搜索地点名称。'),checkedAt:'2026-10-01'};
+ return {...t,...m,province:t.province||'北京',city:t.city||'beijing',hook:m.hook||t.d,latlng:xy?[xy[1],xy[0]]:m.reference,geoNote:m.geoNote||(m.bd?'官方旅游页参考点，BD-09经近似转换到WGS84；不是入口导航。':'依据地址整理的WGS84近似街区参考点，未逐一测绘；误差可能数百米或更大，不可用于入口导航，请搜索地点名称。'),checkedAt:t.checkedAt||'2026-10-01'};
 });
 const RESEARCH_PORTALS={beijing:[
  {title:'北京市数字方志馆',url:'https://bjsfzg.bjdsdfz.cn/',note:'从旧志集成、区县志、风物图志与年鉴找地名线索；索引链接不等于已通读原书。'},

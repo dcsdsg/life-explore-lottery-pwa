@@ -1,4 +1,4 @@
-/* 京郊第二辑。2026-10-01资料整理；路线、交通费用与时长是保守估计，不是实时导航。 */
+/* 京郊第二辑。2026-10-01资料整理；双寺阅读与行程补充2026-10-02。路线、交通费用与时长是保守估计，不是实时导航。 */
 const BEIJING_OUTSKIRT_TASKS = [
   {
     id:'bjc_fahai',city:'beijing',t:'法海寺：六百年前的一根线',d:'一幅壁画为什么需要限时、限人、限光？去看明代绘画，也看今天保护它的办法。',
@@ -51,3 +51,17 @@ const BEIJING_OUTSKIRT_TASKS = [
     culture:{theme:'city',place:'团河行宫遗址公园',address:'大兴区团河路行宫遗址公园',onsite:[75,120],travel:[100,145],why:'园林部门资料说明行宫布局与公共公园，2026大兴区政府报道苑囿文化展启幕。它提供把档案与空间放在一起观察的机会，但不能把展览开幕当永久开放保证。',question:'历史场所的开放，怎样改变它的意义？',reading:[{title:'团河行宫公园资料与南海子苑囿展说明',relation:'地方政府与展览材料',note:'档案记载、修复说明、自己的感受分别写；原址不等于建筑全是原物。'}],route:'地铁到大兴片区再转公交，导航园区观众入口，勿与海淀团城演武厅混淆。',cost:'园林部门页面曾列公园免费；交通50元预留，展览预约和收费当天确认。',environment:'室外园林为主，晴阴天日间；风大或严寒时缩短岸边停留。',access:'公园与展厅接待时间分别确认，展览结束可改公共园林版。',sources:[{title:'市园林绿化局：团河行宫遗址公园',url:'https://yllhj.beijing.gov.cn/ggfw/bjsggml/zlgy/dxq/202206/t20220615_2741773.shtml'},{title:'大兴区政府：2026苑囿文化展',url:'https://www.beijing.gov.cn/ywdt/gqrd/202608/t20260820_4830209.html'}]}
   }
 ];
+// 双寺资料增补：保持稳定 ID 和原四项清单顺序，旧完成记录及 v1 备份继续有效。
+for(const task of BEIJING_OUTSKIRT_TASKS){
+  if(!['bjc_jietai','bjc_tanzhe'].includes(task.id))continue;
+  task.checkedAt='2026-10-02';
+  task.culture.reading.push({title:'朱自清《潭柘寺戒坛寺》',relation:'近代游记与现场对照',note:'已有对应全文入口。作于1934年；只借观察方法，不按旧游记的后门、古洞和交通路线走。'});
+  task.culture.sources.push({title:'2026北京公交集团：通游专线21调整',url:'https://www.beijing.gov.cn/fuwu/bmfw/sy/jrts/202606/t20260611_4696369.html'});
+  if(task.id==='bjc_jietai'){
+    task.culture.access+=' 参观页曾提示千佛阁、大悲殿修缮及古树养护区封闭；未确认已恢复，出发前问开放范围。';
+    task.culture.sources.push({title:'戒台寺景区：优惠与修缮提示（旧公交规则不采用）',url:'https://mp.visitbeijing.com.cn/a1/4OyX68ijSvx'});
+  }else{
+    task.culture.access+=' 2026年9月24日通知涉及9月25–27日中秋提前开园，不能推作10月3日接待保证；咨询010-60862505。';
+    task.culture.sources.push({title:'2026年9月中秋开园通知：仅对指定日期有效',url:'https://news.bjd.com.cn/2026/09/24/11972837.shtml'});
+  }
+}

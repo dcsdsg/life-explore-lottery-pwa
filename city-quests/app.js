@@ -36,6 +36,7 @@ const cityQuests=()=>QUESTS.filter(q=>q.city===selectedCity);
 function selectCity(city,remember=true){
  if(!CITY_CONFIG[city])return;
  selectedCity=city;const c=CITY_CONFIG[city];$('city').value=city;
+ $('temple-day-link').hidden=city!=='beijing';
  const url=new URL(location.href);url.searchParams.set('city',city);history.replaceState(null,'',url.pathname+url.search+url.hash);
  if(remember)try{localStorage.setItem(STORAGE_KEY+':city',city);}catch{}
  $('city-name').textContent=c.name;$('city-kicker').textContent=`城市探索档案 / ${c.name} · ${c.chapter}`;
@@ -131,6 +132,7 @@ function renderDetail(){
 </div>
 <div class="detail-body">
 <p>${escapeHtml(c.why)}</p>
+${['bjc_jietai','bjc_tanzhe'].includes(q.id)?'<p class="reading-shortcut"><a class="reading-link" href="./temple-day.html">京西双寺一日行程 · 路线、返程与文化案卷 ↗</a></p>':''}
 <p class="detail-question">带着这个问题去：${escapeHtml(c.question)}</p>${reasons.length?`<div class="warning">本次出发需留意：${escapeHtml(reasons.join('；'))}。可先接取，另约合适日期。</div>`:''}${alerts.map(a=>`<p class="warning">${escapeHtml(a.text)}</p>`).join('')}<div class="detail-grid">
 <div class="info-box">
 <h3>时间预算 · ${c.travel?'从'+escapeHtml(CITY_CONFIG[q.city].origin)+'出发':'仅现场，住宿地未设定'}</h3>
